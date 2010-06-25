@@ -1,0 +1,8 @@
+syntax: glob
+*.pyc
+*.swp
+*~
+.DS_Store
+__MACOSX
+Thumbs.db
+desktop.ini
