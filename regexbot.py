@@ -23,6 +23,8 @@ def handle_pubmsg(connection, event):
       # 5 seconds between requests
       # any more are ignored
       print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, timedelta(seconds=5).seconds)
+      connection.kick(event.target(), nick, 'Flood protection activated')
+      
       return 
     
     if len(message_buffer) == 0:
