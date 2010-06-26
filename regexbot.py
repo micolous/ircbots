@@ -90,6 +90,6 @@ def handle_pubmsg(connection, event):
 irc = irclib.IRC()
 irc.add_global_handler('pubmsg', handle_pubmsg)
 server = irc.server()
-server.connect("irc.micolous.id.au", 6667, "regexbot")
+server.connect("localhost", 6667, "regexbot")
 server.join("#streetgeek")
 irc.process_forever()
