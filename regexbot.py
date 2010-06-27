@@ -52,7 +52,7 @@ def handle_pubmsg(connection, event):
       if ignore_case:
         e = re.compile(parts[1], re.I)
       else:
-        e = re.compile(parts[1], re.I)
+        e = re.compile(parts[1])
     except Exception, ex:
       connection.privmsg(event.target(), '%s: failure compiling regular expression: %s' % (nick, ex))
       return
