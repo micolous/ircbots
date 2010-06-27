@@ -32,7 +32,7 @@ def handle_pubmsg(connection, event):
 				flooders.append(event.source())
 				connection.notice(nick, 'Flood protection active, ignoring your request and adding you to "flooders" list until the cooldown has expired.	 If you persist you will be kicked from the channel.	I won\'t respond to ANYONE until people have stopped issuing commands for a few seconds.')
 			return
-		 else:
+		else:
 			# add user to "flooders" list, clear existing ones
 			flooders = [event.source(),]
 		
