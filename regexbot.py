@@ -4,9 +4,11 @@ from datetime import datetime, timedelta
 message_buffer = []
 MAX_MESSAGES = 15
 last_message = datetime.now()
+flooders = []
+
 
 def handle_pubmsg(connection, event):
-  global message_buffer, MAX_MESSAGES, last_message
+  global message_buffer, MAX_MESSAGES, last_message, flooders
   nick = event.source().partition("!")[0]
   msg = event.arguments()[0]
   
@@ -23,9 +25,16 @@ def handle_pubmsg(connection, event):
       # 5 seconds between requests
       # any more are ignored
       print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, timedelta(seconds=5).seconds)
-      connection.kick(event.target(), nick, 'Flood protection activated')
-      
-      return 
+      if event.source() in flooders:
+      	# user has recently sent a command
+      	connection.kick(event.target(), nick, 'Flood protection activated')
+      else:
+      	flooders.append(event.source())
+      	connection.notice(nick,	'Flood protection active, ignoring your request and adding you to "flooders" list until the cooldown has expired.  If you persist you will be kicked from the channel.  I won\'t respond to ANYONE until people have stopped issuing commands for a few seconds.')
+      return
+     else:
+     	# add user to "flooders" list, clear existing ones
+     	flooders = [event.source(),]
     
     if len(message_buffer) == 0:
       connection.privmsg(event.target(), '%s: message buffer is empty' % nick)
