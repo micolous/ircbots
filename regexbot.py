@@ -13,6 +13,10 @@ def handle_pubmsg(connection, event):
 	msg = event.arguments()[0]
 	
 	if msg.startswith('s/'):
+		if 'peer' in event.source():
+			connection.kick(event.target(), nick, 'suprise!')
+			return
+			
 		# handle regex
 		parts = msg.split('/')
 		
