@@ -1,6 +1,11 @@
 import irclib, re
 from datetime import datetime, timedelta
 
+host, port = "localhost", 6667
+nick = "regexbot"
+channel = "#streetgeek"
+
+
 message_buffer = []
 MAX_MESSAGES = 15
 last_message = datetime.now()
@@ -13,10 +18,6 @@ def handle_pubmsg(connection, event):
 	msg = event.arguments()[0]
 	
 	if msg.startswith('s/'):
-		if 'peer' in event.source():
-			connection.kick(event.target(), nick, 'suprise!')
-			return
-			
 		# handle regex
 		parts = msg.split('/')
 		
@@ -100,9 +101,13 @@ def handle_pubmsg(connection, event):
 	# trim the buffer
 	message_buffer = message_buffer[-MAX_MESSAGES:]
 
+def join_channels(connection, event):
+	connection.join(channel)
+	connection.send_raw("MODE %s +B" % nick) # Compliance with most network's rules to set this mode on connect.
+
 irc = irclib.IRC()
 irc.add_global_handler('pubmsg', handle_pubmsg)
+irc.add_global_handler('welcome', join_channels)
 server = irc.server()
-server.connect("localhost", 6667, "regexbot")
-server.join("#streetgeek")
+server.connect(host, port, nick)
 irc.process_forever()
