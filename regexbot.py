@@ -126,8 +126,11 @@ def handle_pubmsg(connection, event):
 				return
 		
 		# no match found
-		connection.privmsg(event.target(), '%s: no match found' % nick)		 
+		connection.privmsg(event.target(), '%s: no match found' % nick)
 	else:
+		if 'STOPS COPIES ME' in msg.upper():
+			connection.kick(event.target(), nick, 'STOPS COPIES ME')
+			return
 		# add to buffer
 		message_buffer.append([nick, msg[:200]])
 		
