@@ -7,3 +7,4 @@ __MACOSX
 Thumbs.db
 desktop.ini
 *.ini
+*.orig
