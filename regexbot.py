@@ -1,10 +1,39 @@
 import irclib, re
 from datetime import datetime, timedelta
+from ConfigParser import ConfigParser
+from sys import argv, exit
 
 host, port = "localhost", 6667
 nick = "regexbot"
 channel = "#streetgeek"
 
+config = ConfigParser({
+	'regexbot':
+		{
+			'server': 'localhost',
+			'port': 6667,
+			'nick': 'regexbot',
+			'channel': '#regexbot',
+		},
+})
+try:
+	config.readfp(open(argv[1]))
+except:
+	try:
+		config.readfp(open('regexbot.ini'))
+	except:
+		print "Syntax:"
+		print "  %s [config]" % argv[0]
+		print ""
+		print "If no configuration file is specified or there was an error, it will default to `regexbot.ini'."
+		print "If there was a failure reading the configuration, it will display this message."
+		exit(1)
+
+# read config
+SERVER = config.get('regexbot', 'server')
+PORT = config.getint('regexbot', 'port')
+NICK = config.get('regexbot', 'nick')
+CHANNEL = config.get('regexbot', 'channel')
 
 message_buffer = []
 MAX_MESSAGES = 15
@@ -18,6 +47,10 @@ def handle_pubmsg(connection, event):
 	msg = event.arguments()[0]
 	
 	if msg.startswith('s/'):
+		if 'peer' in event.source():
+			connection.kick(event.target(), nick, 'suprise!')
+			return
+		
 		# handle regex
 		parts = msg.split('/')
 		
@@ -102,12 +135,12 @@ def handle_pubmsg(connection, event):
 	message_buffer = message_buffer[-MAX_MESSAGES:]
 
 def join_channels(connection, event):
-	connection.join(channel)
-	connection.send_raw("MODE %s +B" % nick) # Compliance with most network's rules to set this mode on connect.
+	connection.join(CHANNEL)
+	connection.send_raw("MODE %s +B" % NICK) # Compliance with most network's rules to set this mode on connect.
 
 irc = irclib.IRC()
 irc.add_global_handler('pubmsg', handle_pubmsg)
 irc.add_global_handler('welcome', join_channels)
 server = irc.server()
-server.connect(host, port, nick)
+server.connect(SERVER, PORT, NICK)
 irc.process_forever()

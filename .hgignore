@@ -6,3 +6,4 @@ syntax: glob
 __MACOSX
 Thumbs.db
 desktop.ini
+*.ini
