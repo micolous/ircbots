@@ -7,15 +7,7 @@ host, port = "localhost", 6667
 nick = "regexbot"
 channel = "#streetgeek"
 
-config = ConfigParser({
-	'regexbot':
-		{
-			'server': 'localhost',
-			'port': 6667,
-			'nick': 'regexbot',
-			'channel': '#regexbot',
-		},
-})
+config = ConfigParser()
 try:
 	config.readfp(open(argv[1]))
 except:
@@ -34,12 +26,23 @@ SERVER = config.get('regexbot', 'server')
 PORT = config.getint('regexbot', 'port')
 NICK = config.get('regexbot', 'nick')
 CHANNEL = config.get('regexbot', 'channel')
+FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'flood_cooldown'))
+MAX_MESSAGES = config.getint('regexbot', 'max_messages')
 
 message_buffer = []
-MAX_MESSAGES = 15
 last_message = datetime.now()
 flooders = []
+ignore_list = []
 
+if config.has_section('ignore'):
+	for k,v in config.items('ignore'):
+		try:
+			ignore_list.append(re.compile(v, re.I))
+		except Exception, ex:
+			print "Error compiling regular expression in ignore list (%s):" % k
+			print "  %s" % v
+			print ex
+			exit(1)
 
 def handle_pubmsg(connection, event):
 	global message_buffer, MAX_MESSAGES, last_message, flooders
@@ -47,9 +50,11 @@ def handle_pubmsg(connection, event):
 	msg = event.arguments()[0]
 	
 	if msg.startswith('s/'):
-		if 'peer' in event.source():
-			connection.kick(event.target(), nick, 'suprise!')
-			return
+		for item in ignore_list:
+			if item.search(event.source()) != None:
+				# ignore list item hit
+				print "Ignoring message from %s because of: %s" % (event.source(), item.pattern)
+				return
 		
 		# handle regex
 		parts = msg.split('/')
@@ -59,20 +64,10 @@ def handle_pubmsg(connection, event):
 		delta = now - last_message
 		last_message = now
 		
-		if delta < timedelta(seconds=5):
+		if delta < FLOOD_COOLDOWN:
 			# 5 seconds between requests
 			# any more are ignored
-			print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, timedelta(seconds=5).seconds)
-			if event.source() in flooders:
-				# user has recently sent a command
-				connection.kick(event.target(), nick, 'Flood protection activated')
-			else:
-				flooders.append(event.source())
-				connection.privmsg(nick, 'Flood protection active, ignoring your request and adding you to "flooders" list until the cooldown has expired.	 If you persist you will be kicked from the channel.	I won\'t respond to ANYONE until people have stopped issuing commands for a few seconds.')
-			return
-		else:
-			# add user to "flooders" list, clear existing ones
-			flooders = [event.source(),]
+			print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
 		
 		if len(message_buffer) == 0:
 			connection.privmsg(event.target(), '%s: message buffer is empty' % nick)
