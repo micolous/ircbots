@@ -56,7 +56,7 @@ def handle_ctcp(event, match):
 	global message_buffer, MAX_MESSAGES, CHANNEL
 	if event.channel == CHANNEL:
 		if event.args[0] == "ACTION":
-			message_buffer.append([event.nick, msg[:200], True])
+			message_buffer.append([event.nick, event.text[:200], True])
 			message_buffer = message_buffer[-MAX_MESSAGES:]
 			return
 
