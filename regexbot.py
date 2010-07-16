@@ -34,6 +34,8 @@ try: FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'flood_cooldow
 except: FLOOD_COOLDOWN = timedelta(seconds=5)
 try: MAX_MESSAGES = config.getint('regexbot', 'max_messages')
 except: MAX_MESSAGES = 25
+try: NICKSERV_PASS = config.get('regexbot', 'nickserv_pass')
+except: NICKSERV_PASS = None
 
 message_buffer = []
 last_message = datetime.now()
@@ -152,8 +154,11 @@ def handle_msg(event, match):
 	message_buffer = message_buffer[-MAX_MESSAGES:]
 
 def handle_welcome(event, match):
+	global NICKSERV_PASS
 	# Compliance with most network's rules to set this mode on connect.
 	event.connection.usermode("+B")
+	if NICKSERV_PASS != None:
+		event.connection.tell('NickServ', 'identify %s' % NICKSERV_PASS)
 
 irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
 irc.bind(handle_msg, PRIVMSG)
