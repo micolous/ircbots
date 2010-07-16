@@ -245,6 +245,10 @@ class IRC(asynchat.async_chat):
 	def rx_msg(self, args, text, origin):
 		event = IRCEvent(self, args[0], args[1:], text, origin)
 		
+		# do autojoin
+		if event.event_type == RPL_WELCOME:
+			self._welcome_join(event, None)
+			
 		# respond to ping
 		if event.event_type == PING:
 			self.todo([PONG, text])
@@ -274,7 +278,7 @@ class IRC(asynchat.async_chat):
 
 	def start_channels(self, chans):
 		self._startChannels = chans
-		self.bind(self._welcome_join, RPL_WELCOME)
+		#self.bind(self._welcome_join, RPL_WELCOME)
 				  
 	def _welcome_join(self, event, m):
 		for chan in self._startChannels:
