@@ -158,7 +158,7 @@ def handle_welcome(event, match):
 	# Compliance with most network's rules to set this mode on connect.
 	event.connection.usermode("+B")
 	if NICKSERV_PASS != None:
-		event.connection.tell('NickServ', 'identify %s' % NICKSERV_PASS)
+		event.connection.todo(['NickServ', 'identify', NICKSERV_PASS])
 
 irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
 irc.bind(handle_msg, PRIVMSG)
