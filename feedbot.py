@@ -58,8 +58,7 @@ def update(irc):
 	
 	# work though the urls
 	for k in feed_urls:
-		#try:
-		if 1:
+		try:
 			# download the new feed
 			if last_feeds.has_key(k) and hasattr(last_feeds[k], 'modified'):
 				feeds[k] = feedparser.parse(feed_urls[k], modified=last_feeds[k].modified)
@@ -92,12 +91,12 @@ def update(irc):
 					feeds[k] = last_feeds[k]
 				
 			
-		#except:
-		#	print "Failure updating feed `%s'." % k
-		#	
-		#	# revert to last version
-		#	if last_feeds.has_key(k):
-		#		feeds[k] = last_feeds[k]
+		except:
+			print "Failure updating feed `%s'." % k
+			
+			# revert to last version
+			if last_feeds.has_key(k):
+				feeds[k] = last_feeds[k]
 
 def feed_updater(irc):
 	global UPDATE_FREQUENCY
