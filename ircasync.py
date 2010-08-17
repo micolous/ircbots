@@ -308,6 +308,10 @@ class IRC(asynchat.async_chat):
 	def ctcp_response(self, dest, command, args=""):
 		"""Sends a CTCP Response to a client or channel"""
 		self.notice(dest, '\x01%s %s\x01' % (command, args))
+		
+	def action(self, dest, msg=""):
+		"""Sends a CTCP ACTION to a client or channel."""
+		self.ctcp_request(dest, 'ACTION', msg)
 
 # cf irc:// urls in Mozilla
 # http://www.mozilla.org/projects/rt-messaging/chatzilla/irc-urls.html
