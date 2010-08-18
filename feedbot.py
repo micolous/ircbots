@@ -48,7 +48,7 @@ last_feeds = {}
 def announce_post(irc, feed, entry):
 	global CHANNEL
 	print 'NEW POST: %s: %s (%s)' % (entry.title, entry.link, feed)
-	irc.action(CHANNEL, 'found a new post on %s: %s <%s>' % (str(feed), str(entry.title.strip()), str(entry.link.strip())))
+	irc.action(CHANNEL, 'found a new post on %s: %s: %s' % (str(feed), str(entry.title.strip()), str(entry.link.strip())))
 
 def update(irc):
 	global feed_urls, feeds, last_feeds
