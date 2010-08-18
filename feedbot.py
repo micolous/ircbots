@@ -74,13 +74,21 @@ def update(irc):
 					# assume that the old feed has the newest entry at the time at the top
 					x = 0
 					for entry in feeds[k].entries:
-						if entry.link != last_feeds[k].entries[0].link and x < 4:
-							announce_post(irc, k, entry)
-							x += 1
-						else:
-							# hit a match, don't publish any more
+						oldlink = False
+						# see if link has been published yet
+						for oldentry in last_feeds[k].entries:
+							if entry.link == oldentry.link:
+								oldlink = True
+								break
+								
+						if oldlink or x > 4:
+							# link has been published, or 4 links have been pushed
 							print "not publishing anymore links"
 							break
+						
+						# all good to announce
+						announce_post(irc, k, entry)
+						x += 1
 						
 				else:
 					# don't publish anything, this is an initial run
