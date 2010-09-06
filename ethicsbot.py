@@ -28,7 +28,13 @@ ETHICAL_MESSAGES = [
 		'your company\'s charity activities in the third world were recognised by the judge in giving your company a lenient sentence.',
 		'your company owns a 70% share in local newspapers and television stations, meaning this incident is never brought to the public\'s attention.',
 	],
-]		
+]
+
+ETHICAL_STATES = [
+	'unethical',
+	'ethical',
+	'unsure',
+]	
 
 config = ConfigParser()
 try:
@@ -120,7 +126,7 @@ def handle_msg(event, match):
 				if ord(c) & (2 ** x) > 1:
 					ethical = (ethical + 1) % 3
 		
-		event.reply('%s: %s' % (event.nick, random.choice(ETHICAL_MESSAGES[ethical])))
+		event.reply('%s: (%s) %s' % (event.nick, ETHICAL_STATES[ethical], random.choice(ETHICAL_MESSAGES[ethical])))
 
 def handle_welcome(event, match):
 	global NICKSERV_PASS
