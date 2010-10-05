@@ -47,8 +47,9 @@ last_feeds = {}
 
 def announce_post(irc, feed, entry):
 	global CHANNEL
-	print 'NEW POST: %s: %s (%s)' % (entry.title, entry.link.replace("http://www.streetgeek.com.au/portal/modules.php?name=Forums&file=viewtopic&p=", "http://fj.streetgeek.com.au/"), feed)
-	irc.action(CHANNEL, 'found a new post on %s: %s: %s' % (str(feed), str(entry.title.strip()), str(entry.link.strip().replace("http://www.streetgeek.com.au/portal/modules.php?name=Forums&file=viewtopic&p=", "http://fj.streetgeek.com.au/"))))
+	link = str(entry.link.replace("http://www.streetgeek.com.au/portal/modules.php?name=Forums&file=viewtopic&p=", "http://fj.streetgeek.com.au/"))
+	print 'NEW POST: %s: %s (%s)' % (entry.title, link, feed)
+	irc.action(CHANNEL, 'found a new post on %s: %s: %s' % (str(feed), str(entry.title), link))
 
 def update(irc):
 	global feed_urls, feeds, last_feeds
