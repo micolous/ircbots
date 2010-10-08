@@ -69,7 +69,11 @@ def handle_msg(event, match):
 	if event.channel != CHANNEL:
 		# ignore messages not from our channel
 		return
-	
+		
+	# nokiberry has / on a shift state	
+	if msg.startswith('s@'):
+		msg = msg.replace('@','/')
+		
 	if msg.startswith('s/'):
 		for item in ignore_list:
 			if item.search(event.origin) != None:
