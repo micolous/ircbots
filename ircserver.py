@@ -415,7 +415,7 @@ class irc_server(threading.Thread):
 				to_delete.append(channel)
 		
 		for channel in to_delete:
-			self.channels.remove(channel)
+			del self.channels[channel.name]
 		del to_delete
 		
 
