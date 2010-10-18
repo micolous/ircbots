@@ -1,5 +1,16 @@
 #!/usr/bin/env python
+"""
+Car IRC 0.1
+Copyright 2010 Michael Farrell <http://micolous.id.au/>, licensed under the AGPL3.
 
+Preface:
+
+This is an IRC server that I wrote on the way home (Adelaide) from Sydney in the car.  It was written with only pydoc, unit tests being available for example code, RFC 1459 (the old IRC specification from 1993), a short packet capture of another IRC session, no internet access, and no working IRC server implementation to compare it to (only copies of irssi and Colloquy to test with).
+
+You shouldn't ever use this software in a production environment, it's probably horribly broken in so many ways, and I don't plan on "finishing" the software unless I'm in a similar situation again.
+
+I wrote this in about 7 hours, and it was extremely difficult to do given the circumstances.  It was a really great challenge to have and thanks to William <http://firstyear.id.au> for coming up with it.
+"""
 # the car irc server of awesome.
 # based on asyncore
 import asynchat, socket, threading, time
