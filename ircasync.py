@@ -54,6 +54,9 @@ PART='PART'
 INVITE='INVITE'
 QUIT='QUIT'
 MODE='MODE'
+CHANSERV='CHANSERV'
+NICKSERV='NICKSERV'
+TOPIC='TOPIC'
 
 # pseudo-message types we use internally
 CTCP_REQUEST='CTCP_REQUEST'
@@ -312,6 +315,14 @@ class IRC(asynchat.async_chat):
 	def action(self, dest, msg=""):
 		"""Sends a CTCP ACTION to a client or channel."""
 		self.ctcp_request(dest, 'ACTION', msg)
+	
+	def topic(self, channel, text=""):
+		"Sets the topic in a channel"
+		self.todo([TOPIC, channel], text)
+	
+	def chanserv_topic(self, channel, text=""):
+		"Sets the topic in a channel via chanserv"
+		self.todo([CHANSERV, TOPIC, channel, text])
 
 # cf irc:// urls in Mozilla
 # http://www.mozilla.org/projects/rt-messaging/chatzilla/irc-urls.html
