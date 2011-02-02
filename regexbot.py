@@ -56,7 +56,7 @@ if config.has_section('ignore'):
 
 def handle_ctcp(event, match):
 	global message_buffer, MAX_MESSAGES, CHANNEL
-	if event.channel == CHANNEL:
+	if event.channel.lower() == CHANNEL.lower():
 		if event.args[0] == "ACTION":
 			message_buffer.append([event.nick, event.text[:200], True])
 			message_buffer = message_buffer[-MAX_MESSAGES:]
@@ -66,7 +66,7 @@ def handle_msg(event, match):
 	global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL
 	msg = event.text
 	
-	if event.channel != CHANNEL:
+	if event.channel.lower() != CHANNEL.lower():
 		# ignore messages not from our channel
 		return
 		

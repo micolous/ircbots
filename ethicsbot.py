@@ -88,7 +88,7 @@ def handle_msg(event, match):
 	global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL
 	msg = event.text
 	
-	if event.channel != CHANNEL:
+	if event.channel.lower() != CHANNEL.lower():
 		# ignore messages not from our channel
 		return
 	
