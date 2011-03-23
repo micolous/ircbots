@@ -53,21 +53,26 @@ def handle_msg(event, match):
         twitterApi = twitter.Api()
         delta = event.when - last_message
         last_message = event.when
+        error = ""
+        line = ""
         
-        #if delta < FLOOD_COOLDOWN:
-            #print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
-            #return
+        if delta < FLOOD_COOLDOWN:
+            print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
+            return
         
         tweetID = tweetIDRegex.search(msg).groups()[0]
         try:
             tweet = twitterApi.GetStatus(tweetID)
-            event.reply('@%s => %s' % (tweet.user.screen_name, tweet.text))
+            line = "{0} => {1}".format(tweet.user.screen_name, tweet.text)
         except twitter.TwitterError, e:
-                #print e.message
                 if e.message == "No status found with that ID.":
-                    event.reply("Not found")
+                   error = "Tweet not found"
                 if e.message == "Sorry, you are not authorized to see this status.":
-                    event.reply("Not authorized to view that")
+                    error = "Tweet is private"
+        if error:
+            irc.action(CHANNEL,"Oshi, error!: %s" % error)
+        if line:
+            irc.action(CHANNEL, line)
 
 def handle_welcome(event, match):
     global NICKSERV_PASS
