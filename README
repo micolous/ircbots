@@ -4,10 +4,10 @@ Forked from [Micolous](https://github.com/micolous/ircbots)
 Example twitterbot.ini
 ---------------------------------------
     [twitterbot]
-    server = irc.blackhats.net.au
+    server = ircnet.net
     port = 6667
     nick = twitterbot
-    channel = #blackhats
+    channel = #main
     ;nickserv_pass = password
 
     flood_cooldown = 3
