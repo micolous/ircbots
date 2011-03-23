@@ -62,13 +62,12 @@ def handle_msg(event, match):
         try:
             tweet = twitterApi.GetStatus(tweetID)
             event.reply('@%s => %s' % (tweet.user.screen_name, tweet.text))
-        except urllib2.HTTPError, e:
-            if e.code == 403:
-                print "Private profile"
-                event.reply("Profile is private")
-            elif e.code == 404:
-                event.reply("Tweet not found")
-                print "Not found"
+        except twitter.TwitterError, e:
+                #print e.message
+                if e.message == "No status found with that ID.":
+                    event.reply("Not found")
+                if e.message == "Sorry, you are not authorized to see this status.":
+                    event.reply("Not authorized to view that")
 
 def handle_welcome(event, match):
     global NICKSERV_PASS
