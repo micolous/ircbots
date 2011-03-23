@@ -1,1 +1,12 @@
-Some IRC bots for use on the #blackhats IRC network.
+IRC bots created for the #blackhats IRC network.
+Forked from https://github.com/micolous/ircbots
+
+Example twitterbot.ini
+[twitterbot]
+server = ircnet.net
+port = 6667
+nick = twitterbot
+channel = #main
+;nickserv_pass = password
+
+flood_cooldown = 3
