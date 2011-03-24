@@ -3,6 +3,9 @@ Forked from https://github.com/micolous/ircbots
 
 Twitter bot
 ----------------
+Requirements:
+pip install python-twitter oauth2
+
 Example twitterbot.ini
 [twitterbot]
 server = ircnet.net
