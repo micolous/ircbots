@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import asyncore, random, re, twitter, urllib2
+# -*- coding: utf-8 -*-
+import asyncore, random, re, twitter, urllib2, exceptions
 from ConfigParser import ConfigParser
 from datetime import datetime, timedelta
 from sys import argv, exit
@@ -63,14 +64,21 @@ def handle_msg(event, match):
         tweetID = tweetIDRegex.search(msg).groups()[0]
         try:
             tweet = twitterApi.GetStatus(tweetID)
-            line = "{0} => {1}".format(tweet.user.screen_name, tweet.text)
+            try:
+                line = "{0} => {1}".format(tweet.user.screen_name, tweet.text)
+            except exceptions.UnicodeEncodeError:
+                print "Encoding error, fixing it up"
+                tweetUni = tweet.text.encode('utf-8')
+                print tweetUni
+                line = "{0} => {1}".format(tweet.user.screen_name, tweetUni)
+                
         except twitter.TwitterError, e:
                 if e.message == "No status found with that ID.":
                    error = "Tweet not found"
                 if e.message == "Sorry, you are not authorized to see this status.":
                     error = "Tweet is private"
         if error:
-            irc.action(CHANNEL,"Oshi, error!: %s" % error)
+            irc.action(CHANNEL,"Error => %s" % error)
         if line:
             irc.action(CHANNEL, line)
 
