@@ -65,12 +65,12 @@ def handle_msg(event, match):
         try:
             tweet = twitterApi.GetStatus(tweetID)
             try:
-                line = "{0} => {1}".format(tweet.user.screen_name, tweet.text)
+                line = "%s => %s" %(tweet.user.screen_name, tweet.text)
             except exceptions.UnicodeEncodeError:
                 print "Encoding error, fixing it up"
                 tweetUni = tweet.text.encode('utf-8')
                 print tweetUni
-                line = "{0} => {1}".format(tweet.user.screen_name, tweetUni)
+                line = "%s => %s" % (tweet.user.screen_name, tweetUni)
                 
         except twitter.TwitterError, e:
                 if e.message == "No status found with that ID.":
