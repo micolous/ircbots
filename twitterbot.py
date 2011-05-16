@@ -36,7 +36,7 @@ except: FLOOD_COOLDOWN = timedelta(seconds=5)
 try: NICKSERV_PASS = config.get('twitterbot', 'nickserv_pass')
 except: NICKSERV_PASS = None
 
-tweetURLRegex = re.compile(r"(http(s?):\/\/twitter.com\/.*\/status\/([0-9]{0,20}))")
+tweetURLRegex = re.compile(r"(http(s?):\/\/twitter.com\/.*\/statuse?s?\/([0-9]{0,20}))")
 message_buffer = []
 last_message = datetime.now()
 flooders = []
@@ -50,7 +50,7 @@ def handle_msg(event, match):
         return
     
     if tweetURLRegex.search(msg):
-        tweetIDRegex = re.compile(r".*/status\/([0-9]{0,20})") 
+        tweetIDRegex = re.compile(r".*/statuse?s?\/([0-9]{0,20})") 
         twitterApi = twitter.Api()
         delta = event.when - last_message
         last_message = event.when
