@@ -20,7 +20,7 @@ except:
 		print "If no configuration file is specified or there was an error, it will default to `twitterbot.ini'."
 		print "If there was a failure reading the configuration, it will display this message."
 		exit(1)
-		
+
 SERVER = config.get('twitterbot', 'server')
 try: PORT = config.getint('twitterbot', 'port')
 except: PORT = DEFAULT_PORT
@@ -42,52 +42,55 @@ last_message = datetime.now()
 flooders = []
 
 def handle_msg(event, match):
-    global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL
-    msg = event.text
-    
-    if event.channel.lower() != CHANNEL.lower():
-        # ignore messages not from our channel
-        return
-    
-    if tweetURLRegex.search(msg):
-        tweetIDRegex = re.compile(r".*/statuse?s?\/([0-9]{0,20})") 
-        twitterApi = twitter.Api()
-        delta = event.when - last_message
-        last_message = event.when
-        error = ""
-        line = ""
-        
-        if delta < FLOOD_COOLDOWN:
-            print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
-            return
-        
-        tweetID = tweetIDRegex.search(msg).groups()[0]
-        try:
-            tweet = twitterApi.GetStatus(tweetID)
-            try:
-                line = "%s => %s" %(tweet.user.screen_name, tweet.text.replace('\n', ' ').replace('\r',''))
-            except exceptions.UnicodeEncodeError:
-                print "Encoding error, fixing it up"
-                tweetUni = tweet.text.encode('utf-8').replace('\n', ' ').replace('\r','')
-                print tweetUni
-                line = "%s => %s" % (tweet.user.screen_name, tweetUni)
-                
-        except twitter.TwitterError, e:
-                if e.message == "No status found with that ID.":
-                   error = "Tweet not found"
-                if e.message == "Sorry, you are not authorized to see this status.":
-                    error = "Tweet is private"
-        if error:
-            irc.action(CHANNEL,"Error => %s" % error)
-        if line:
-            irc.action(CHANNEL, line)
+	global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL
+	msg = event.text
+	
+	if event.channel.lower() != CHANNEL.lower():
+		# ignore messages not from our channel
+		return
+	
+	if tweetURLRegex.search(msg):
+		tweetIDRegex = re.compile(r".*/statuse?s?\/([0-9]{0,20})") 
+		twitterApi = twitter.Api()
+		delta = event.when - last_message
+		last_message = event.when
+		error = ""
+		line = ""
+		
+		if delta < FLOOD_COOLDOWN:
+			print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
+			return
+		
+		tweetID = tweetIDRegex.search(msg).groups()[0]
+		try:
+			tweet = twitterApi.GetStatus(tweetID)
+			try:
+				line = "%s => %s" %(tweet.user.screen_name, tweet.text.replace('\n', ' ').replace('\r',''))
+			except exceptions.UnicodeEncodeError:
+				print "Encoding error, fixing it up"
+				tweetUni = tweet.text.encode('utf-8').replace('\n', ' ').replace('\r','')
+				print tweetUni
+				line = "%s => %s" % (tweet.user.screen_name, tweetUni)
+				
+		except twitter.TwitterError, e:
+			if e.message == "No status found with that ID.":
+			   error = "Tweet not found"
+			if e.message == "Sorry, you are not authorized to see this status.":
+				error = "Tweet is private"
+		except urllib2.HTTPError, e:
+			error = "Twitter API failure - try again later."
+			
+		if error:
+			irc.action(CHANNEL,"Error => %s" % error)
+		if line:
+			irc.action(CHANNEL, line)
 
 def handle_welcome(event, match):
-    global NICKSERV_PASS
-    # Compliance with most network's rules to set this mode on connect.
-    event.connection.usermode("+B")
-    if NICKSERV_PASS != None:
-        event.connection.todo(['NickServ', 'identify', NICKSERV_PASS])
+	global NICKSERV_PASS
+	# Compliance with most network's rules to set this mode on connect.
+	event.connection.usermode("+B")
+	if NICKSERV_PASS != None:
+		event.connection.todo(['NickServ', 'identify', NICKSERV_PASS])
 
 irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
 irc.bind(handle_msg, PRIVMSG)
