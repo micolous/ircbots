@@ -65,7 +65,7 @@ def handle_msg(event, match):
 		try:
 			tweet = twitterApi.GetStatus(tweetID)
 			try:
-				line = "%s => %s" %(tweet.user.screen_name, tweet.text.replace('\n', ' ').replace('\r',''))
+				line = "%s => %s" %(tweet.user.screen_name, tweet.text.decode('utf-8').encode('utf-8').replace('\n', ' ').replace('\r',''))
 			except exceptions.UnicodeEncodeError:
 				print "Encoding error, fixing it up"
 				tweetUni = tweet.text.encode('utf-8').replace('\n', ' ').replace('\r','')
