@@ -45,7 +45,7 @@ try: PORT = config.getint('regexbot', 'port')
 except: PORT = DEFAULT_PORT
 NICK = config.get('regexbot', 'nick')
 CHANNEL = config.get('regexbot', 'channel')
-VERSION = 'regexbot; https://github.com/micolous/ircbots/; %s'
+VERSION = config.get('regexbot', 'version') + "; %s"
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
