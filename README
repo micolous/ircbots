@@ -1,8 +1,0 @@
-
-IRC bots created for the #blackhats IRC network.
-
-Twitter bot
-----------------
-Requirements:
-pip install python-twitter oauth2
-
