@@ -70,11 +70,12 @@ def handle_msg(event, match):
 		# ignore messages not from our channel
 		return
 		
-	# nokiberry has / on a shift state	
-	if msg.startswith('s@'):
-		msg = msg.replace('@','/')
+	valid_separaters = ['@','#','%',':',';','/']
+	separator = '/'
+	if msg.startswith('s') and msg[1] in valid_separaters:
+		separator = msg[1];
 		
-	if msg.startswith('s/'):
+	if msg.startswith('s' + separator):
 		for item in ignore_list:
 			if item.search(event.origin) != None:
 				# ignore list item hit
@@ -82,7 +83,7 @@ def handle_msg(event, match):
 				return
 		
 		# handle regex
-		parts = msg.split('/')
+		parts = msg.split(separator)
 		
 		# now flood protect!
 		delta = event.when - last_message
@@ -99,12 +100,12 @@ def handle_msg(event, match):
 			return
 		
 		if len(parts) == 3:
-			event.reply('%s: invalid regular expression, you forgot the trailing slash, dummy' % event.nick)
+			event.reply('%s: invalid regular expression, you forgot the trailing separator, dummy' % event.nick)
 			return
 		
 		if len(parts) != 4:
 			# not a valid regex
-			event.reply('%s: invalid regular expression, not the right amount of slashes' % event.nick)
+			event.reply('%s: invalid regular expression, not the right amount of separators' % event.nick)
 			return
 		
 		# find messages matching the string
