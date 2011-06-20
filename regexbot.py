@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 regexbot: IRC-based regular expression evaluation tool.
 Copyright 2010 - 2011 Michael Farrell <http://micolous.id.au>
@@ -44,8 +45,8 @@ try: PORT = config.getint('regexbot', 'port')
 except: PORT = DEFAULT_PORT
 NICK = config.get('regexbot', 'nick')
 CHANNEL = config.get('regexbot', 'channel')
-VERSION = 'regexbot hg:%s; http://hg.micolous.id.au/ircbots/'
-try: VERSION = VERSION % Popen(["hg","id"], stdout=PIPE).communicate()[0].strip()
+VERSION = 'regexbot; https://github.com/micolous/ircbots/; %s'
+try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
 
