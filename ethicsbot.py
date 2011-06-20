@@ -1,3 +1,21 @@
+"""
+ethicsbot: Acts as automated ethical consultant on IRC.  Not a lawyer.  Like a magic 8-ball, except always gives the same answer to the same question.
+Copyright 2010 - 2011 Michael Farrell <http://micolous.id.au>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import asyncore, random
 from hashlib import sha512
 from datetime import datetime, timedelta
@@ -56,8 +74,8 @@ try: PORT = config.getint('ethicsbot', 'port')
 except: PORT = DEFAULT_PORT
 NICK = config.get('ethicsbot', 'nick')
 CHANNEL = config.get('ethicsbot', 'channel')
-VERSION = 'ethicsbot hg:%s; http://hg.micolous.id.au/ircbots/'
-try: VERSION = VERSION % Popen(["hg","id"], stdout=PIPE).communicate()[0].strip()
+VERSION = 'ethicsbot; https://github.com/micolous/ircbots/; %s'
+try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
 
