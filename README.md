@@ -10,6 +10,14 @@ There's also an IRC server (carirc) that I wrote as a competition with @aktowns 
 
 Requires feedparser.
 
+## linkbot ##
+
+IRC bot that links two different IRC channels (presumably on different networks) together.  Poor man's way to link together two IRC servers.
+
+Note that joins, parts, quits, bans, kicks etc. are not propegated by this bot, and it is not possible to administer one channel from the other side.
+
+If you want more complete functionality, you should set up proper IRC links.  This bot is designed for where that is not possible to do.
+
 ## regexbot ##
 
 A simple IRC bot that keeps a rotating list of messages to perform regular expressions on.  By default it keeps 25 messages in it's buffer, but this can be changed with a configuration change.
