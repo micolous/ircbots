@@ -93,8 +93,8 @@ def handle_msg(event, match):
 		
 	valid_separaters = ['@','#','%',':',';','/']
 	separator = '/'
-	if msg.startswith('s') and msg[1] in valid_separaters:
-		separator = msg[1];
+	if msg.startswith('s') and len(msg) > 1 and msg[1] in valid_separaters:
+		separator = msg[1]
 		
 	if msg.startswith('s' + separator):
 		for item in ignore_list:
