@@ -330,7 +330,7 @@ class IRC(asynchat.async_chat):
 	
 	def ab(self, command):
 		"Sends UnrealIRCd AB command ;-)"
-		self.todo([AB,], command)
+		self.todo([AB, command])
 
 # cf irc:// urls in Mozilla
 # http://www.mozilla.org/projects/rt-messaging/chatzilla/irc-urls.html
