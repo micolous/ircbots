@@ -57,6 +57,10 @@ MODE='MODE'
 CHANSERV='CHANSERV'
 NICKSERV='NICKSERV'
 TOPIC='TOPIC'
+# UnrealIRCd-specific commands
+AB='AB;'
+HELPOP='HELPOP'
+ISON='ISON'
 
 # pseudo-message types we use internally
 CTCP_REQUEST='CTCP_REQUEST'
@@ -323,6 +327,10 @@ class IRC(asynchat.async_chat):
 	def chanserv_topic(self, channel, text=""):
 		"Sets the topic in a channel via chanserv"
 		self.todo([CHANSERV, TOPIC, channel, text])
+	
+	def ab(self, command):
+		"Sends UnrealIRCd AB command ;-)"
+		self.todo([AB,], command)
 
 # cf irc:// urls in Mozilla
 # http://www.mozilla.org/projects/rt-messaging/chatzilla/irc-urls.html
