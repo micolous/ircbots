@@ -57,10 +57,10 @@ MODE='MODE'
 CHANSERV='CHANSERV'
 NICKSERV='NICKSERV'
 TOPIC='TOPIC'
+ISON='ISON'
 # UnrealIRCd-specific commands
 AB='AB;'
 HELPOP='HELPOP'
-ISON='ISON'
 
 # pseudo-message types we use internally
 CTCP_REQUEST='CTCP_REQUEST'
