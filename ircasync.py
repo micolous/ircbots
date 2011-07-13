@@ -179,7 +179,14 @@ class IRC(asynchat.async_chat):
 	def todo(self, args, *text):
 		command = ' '.join(args)
 		if text: command = command + ' :' + ' '.join(text)
-
+		
+		
+		# remove newline characters because they can cause problems and command
+		# injection
+		if '\r' in command or '\n' in command:
+			debug("WARNING! you sent some newline characters in that message.  they have been removed.")
+		command = command.replace('\r','').replace('\n','')
+		
 		self.push(command + CRLF)
 		debug("sent/pushed command:", command)
 
