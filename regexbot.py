@@ -81,8 +81,8 @@ def handle_ctcp(event, match):
 		if event.args[0] == "ACTION":
 			message_buffer.append([event.nick, event.text[:200], True])
 			message_buffer = message_buffer[-MAX_MESSAGES:]
-			return
 
+			return
 def handle_msg(event, match):
 	global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL
 	msg = event.text
@@ -90,7 +90,26 @@ def handle_msg(event, match):
 	if event.channel.lower() != CHANNEL.lower():
 		# ignore messages not from our channel
 		return
+	
+	if msg.startswith(NICK):
+		lmsg = msg.lower()
 		
+		if 'help' in lmsg or 'info' in lmsg or '?' in lmsg:
+			# now flood protect!
+			delta = event.when - last_message
+			last_message = event.when
+		
+			if delta < FLOOD_COOLDOWN:
+				# 5 seconds between requests
+				# any more are ignored
+				print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
+				return
+		
+			# give information
+			event.reply('%s: I am regexbot, the interactive IRC regular expression tool, originally written by micolous.  Source/docs/version: %s' % (event.nick, VERSION))
+			return
+			
+	
 	valid_separaters = ['@','#','%',':',';','/']
 	separator = '/'
 	if msg.startswith('s') and len(msg) > 1 and msg[1] in valid_separaters:
