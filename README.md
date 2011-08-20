@@ -6,6 +6,20 @@ This includes a Python IRC library, `ircasync.py`.  The library was originally w
 
 There's also an IRC server (carirc) that I wrote as a competition with @aktowns while in a car coming home from Sydney.  More details of the competition parameters and implementation details are in it's source file, `ircserver.py`.  It only implements a subset of the IRC protocol (enough to make clients happy) and does some things strangely.
 
+## Implementation of the Global Cooldown Timer / WHY IS REGEXBOT IGNORING ME ITS BROKEN YOU SUCK ##
+
+Most of the command-oriented bots implement a Global Cooldown Timer.
+
+What happens is every time the bot is issued a command. the time is recorded.  If the time since the last command is less than the cooldown duration (default 5 seconds) it'll ignore the command and reset the cooldown timer.
+
+Once the cooldown timer is up, it'll accept commands again.  Magic.
+
+The reason for this is because then you can't flood regexbot with commands and have it be flooded out of the server.
+
+In `regexbot`, this cooldown timer will be set regardless of any errors (missing slashes, invalid seperators, regex errors, substitution errors.  So wait a few seconds before sending a corrected command, and re-read your regex so it's right.
+
+# bots #
+
 ## feedbot ##
 
 Requires feedparser.
