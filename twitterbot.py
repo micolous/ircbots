@@ -97,6 +97,8 @@ def handle_msg(event, match):
 				error = "Tweet is private"
 		except urllib2.HTTPError, e:
 			error = "Twitter API failure - try again later."
+		except Exception, e:
+			error = "Something really bad happened, something about a %s?" % e
 			
 		if error:
 			irc.action(CHANNEL,"Error => %s" % error)
