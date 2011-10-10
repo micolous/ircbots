@@ -58,7 +58,7 @@ except: NICKSERV_PASS = None
 try: UPDATE_FREQUENCY = config.getint('pagerbot', 'update_frequency')
 except: UPDATE_FREQUENCY = 10
 
-FEED = 'http://paging.sacfs.org/feed1/live/ajax/update.php?f='
+FEED = 'http://paging1.sacfs.org/live/ajax/update.php?f='
 LAST_UPDATE = int(time())
 
 
