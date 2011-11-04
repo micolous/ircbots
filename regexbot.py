@@ -44,15 +44,17 @@ SERVER = config.get('regexbot', 'server')
 try: PORT = config.getint('regexbot', 'port')
 except: PORT = DEFAULT_PORT
 NICK = config.get('regexbot', 'nick')
-CHANNEL = config.get('regexbot', 'channel')
+CHANNELS = config.get('regexbot', 'channels').split()
 try: VERSION = config.get('regexbot', 'version') + '; %s'
 except: VERSION = 'regexbot; https://github.com/micolous/ircbots/; %s'
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
 
-try: FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'flood_cooldown'))
-except: FLOOD_COOLDOWN = timedelta(seconds=5)
+try: CHANNEL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'channel_flood_cooldown'))
+except: CHANNEL_FLOOD_COOLDOWN = timedelta(seconds=5)
+try: GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'global_flood_cooldown'))
+except: GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=1)
 try: MAX_MESSAGES = config.getint('regexbot', 'max_messages')
 except: MAX_MESSAGES = 25
 try: NICKSERV_PASS = config.get('regexbot', 'nickserv_pass')
@@ -60,8 +62,10 @@ except: NICKSERV_PASS = None
 
 message_buffer = []
 last_message = datetime.now()
-flooders = []
+last_message_times = {}
+flooders = {}
 ignore_list = []
+channel_list = []
 
 if config.has_section('ignore'):
 	for k,v in config.items('ignore'):
@@ -73,22 +77,26 @@ if config.has_section('ignore'):
 			print ex
 			exit(1)
 
+for channel in CHANNELS:
+	last_message_times[channel.lower()] = last_message
+	channel_list.append(channel.lower())
+
 # main code
 
 def handle_ctcp(event, match):
-	global message_buffer, MAX_MESSAGES, CHANNEL
-	if event.channel.lower() == CHANNEL.lower():
+	global message_buffer, MAX_MESSAGES, channel_list
+	if event.channel.lower() in channel_list:
 		if event.args[0] == "ACTION":
-			message_buffer.append([event.nick, event.text[:200], True])
+			message_buffer.append([event.nick, event.text[:200], True, None])
 			message_buffer = message_buffer[-MAX_MESSAGES:]
-
 			return
+
 def handle_msg(event, match):
-	global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL
+	global message_buffer, MAX_MESSAGES, last_message, last_message_times, flooders, channel_list
 	msg = event.text
 	
-	if event.channel.lower() != CHANNEL.lower():
-		# ignore messages not from our channel
+	if event.channel.lower() not in channel_list:
+		# ignore messages not from our channels
 		return
 	
 	if msg.startswith(NICK):
@@ -96,13 +104,21 @@ def handle_msg(event, match):
 		
 		if 'help' in lmsg or 'info' in lmsg or '?' in lmsg:
 			# now flood protect!
-			delta = event.when - last_message
+			channel_delta = event.when - last_message
+			global_delta = event.when - last_message_times[event.channel.lower()]
 			last_message = event.when
+			last_message_times[event.channel.lower()] = event.when
 		
-			if delta < FLOOD_COOLDOWN:
-				# 5 seconds between requests
+			if channel_delta < CHANNEL_FLOOD_COOLDOWN:
+				# 5 seconds between requests per-channel
 				# any more are ignored
-				print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
+				print "Flood protection hit, %s of %s seconds were waited" % (channel_delta.seconds, CHANNEL_FLOOD_COOLDOWN.seconds)
+				return
+
+			if global_delta < GLOBAL_FLOOD_COOLDOWN:
+				# 1 second between requests globally
+				# any more are ignored
+				print "Flood protection hit, %s of %s seconds were waited" % (global_delta.seconds, GLOBAL_FLOOD_COOLDOWN.seconds)
 				return
 		
 			# give information
@@ -126,13 +142,21 @@ def handle_msg(event, match):
 		parts = msg.split(separator)
 		
 		# now flood protect!
-		delta = event.when - last_message
+		channel_delta = event.when - last_message
+		global_delta = event.when - last_message_times[event.channel.lower()]
 		last_message = event.when
-		
-		if delta < FLOOD_COOLDOWN:
-			# 5 seconds between requests
+		last_message_times[event.channel.lower()] = event.when
+	
+		if channel_delta < CHANNEL_FLOOD_COOLDOWN:
+			# 5 seconds between requests per-channel
 			# any more are ignored
-			print "Flood protection hit, %s of %s seconds were waited" % (delta.seconds, FLOOD_COOLDOWN.seconds)
+			print "Flood protection hit, %s of %s seconds were waited" % (channel_delta.seconds, CHANNEL_FLOOD_COOLDOWN.seconds)
+			return
+
+		if global_delta < GLOBAL_FLOOD_COOLDOWN:
+			# 1 second between requests globally
+			# any more are ignored
+			print "Flood protection hit, %s of %s seconds were waited" % (global_delta.seconds, GLOBAL_FLOOD_COOLDOWN.seconds)
 			return
 		
 		if len(message_buffer) == 0:
@@ -166,13 +190,13 @@ def handle_msg(event, match):
 		
 		# now we have a valid regular expression matcher!
 		for x in range(len(message_buffer)-1, -1, -1):
-			if e.search(message_buffer[x][1]) != None:
+			if e.search(message_buffer[x][1]) != None and message_buffer[x][3] == event.channel.lower():
 				# match found!
 				
 				new_message = []
 				# replace the message in the buffer
 				try:
-					new_message = [message_buffer[x][0],	e.sub(parts[2], message_buffer[x][1]).replace('\n','').replace('\r','')[:200], message_buffer[x][2]]
+					new_message = [message_buffer[x][0],	e.sub(parts[2], message_buffer[x][1]).replace('\n','').replace('\r','')[:200], message_buffer[x][2],event.channel.lower()]
 					del message_buffer[x]
 					message_buffer.append(new_message)
 				except Exception, ex:
@@ -193,7 +217,7 @@ def handle_msg(event, match):
 		event.reply('%s: no match found' % event.nick)
 	else:
 		# add to buffer
-		message_buffer.append([event.nick, msg[:200], False])
+		message_buffer.append([event.nick, msg[:200], False, event.channel.lower()])
 		
 	# trim the buffer
 	message_buffer = message_buffer[-MAX_MESSAGES:]
@@ -205,7 +229,7 @@ def handle_welcome(event, match):
 	if NICKSERV_PASS != None:
 		event.connection.todo(['NickServ', 'identify', NICKSERV_PASS])
 
-irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
+irc = IRC(nick=NICK, start_channels=CHANNELS, version=VERSION)
 irc.bind(handle_msg, PRIVMSG)
 irc.bind(handle_welcome, RPL_WELCOME)
 irc.bind(handle_ctcp, CTCP_REQUEST)
