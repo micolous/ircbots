@@ -60,7 +60,7 @@ except: MAX_MESSAGES = 25
 try: NICKSERV_PASS = config.get('regexbot', 'nickserv_pass')
 except: NICKSERV_PASS = None
 
-message_buffer = []
+message_buffer = {}
 last_message = datetime.now()
 last_message_times = {}
 flooders = {}
@@ -78,24 +78,27 @@ if config.has_section('ignore'):
 			exit(1)
 
 for channel in CHANNELS:
+	message_buffer[channel.lower()] = []
 	last_message_times[channel.lower()] = last_message
 	channel_list.append(channel.lower())
 
 # main code
 
 def handle_ctcp(event, match):
+	channel = event.channel.lower()
 	global message_buffer, MAX_MESSAGES, channel_list
-	if event.channel.lower() in channel_list:
+	if channel in channel_list:
 		if event.args[0] == "ACTION":
-			message_buffer.append([event.nick, event.text[:200], True, None])
-			message_buffer = message_buffer[-MAX_MESSAGES:]
+			message_buffer[channel].append([event.nick, event.text[:200], True])
+			message_buffer[channel] = message_buffer[channel][-MAX_MESSAGES:]
 			return
 
 def handle_msg(event, match):
 	global message_buffer, MAX_MESSAGES, last_message, last_message_times, flooders, channel_list
 	msg = event.text
+	channel = event.channel.lower()
 	
-	if event.channel.lower() not in channel_list:
+	if channel not in channel_list:
 		# ignore messages not from our channels
 		return
 	
@@ -105,9 +108,9 @@ def handle_msg(event, match):
 		if 'help' in lmsg or 'info' in lmsg or '?' in lmsg:
 			# now flood protect!
 			channel_delta = event.when - last_message
-			global_delta = event.when - last_message_times[event.channel.lower()]
+			global_delta = event.when - last_message_times[channel]
 			last_message = event.when
-			last_message_times[event.channel.lower()] = event.when
+			last_message_times[channel] = event.when
 		
 			if channel_delta < CHANNEL_FLOOD_COOLDOWN:
 				# 5 seconds between requests per-channel
@@ -143,9 +146,9 @@ def handle_msg(event, match):
 		
 		# now flood protect!
 		channel_delta = event.when - last_message
-		global_delta = event.when - last_message_times[event.channel.lower()]
+		global_delta = event.when - last_message_times[channel]
 		last_message = event.when
-		last_message_times[event.channel.lower()] = event.when
+		last_message_times[channel] = event.when
 	
 		if channel_delta < CHANNEL_FLOOD_COOLDOWN:
 			# 5 seconds between requests per-channel
@@ -159,7 +162,7 @@ def handle_msg(event, match):
 			print "Flood protection hit, %s of %s seconds were waited" % (global_delta.seconds, GLOBAL_FLOOD_COOLDOWN.seconds)
 			return
 		
-		if len(message_buffer) == 0:
+		if len(message_buffer[channel]) == 0:
 			event.reply('%s: message buffer is empty' % event.nick)
 			return
 		
@@ -189,16 +192,16 @@ def handle_msg(event, match):
 			return
 		
 		# now we have a valid regular expression matcher!
-		for x in range(len(message_buffer)-1, -1, -1):
-			if e.search(message_buffer[x][1]) != None and message_buffer[x][3] == event.channel.lower():
+		for x in range(len(message_buffer[channel])-1, -1, -1):
+			if e.search(message_buffer[channel][x][1]) != None:
 				# match found!
 				
 				new_message = []
 				# replace the message in the buffer
 				try:
-					new_message = [message_buffer[x][0],	e.sub(parts[2], message_buffer[x][1]).replace('\n','').replace('\r','')[:200], message_buffer[x][2],event.channel.lower()]
-					del message_buffer[x]
-					message_buffer.append(new_message)
+					new_message = [message_buffer[channel][x][0],	e.sub(parts[2], message_buffer[channel][x][1]).replace('\n','').replace('\r','')[:200], message_buffer[channel][x][2]]
+					del message_buffer[channel][x]
+					message_buffer[channel].append(new_message)
 				except Exception, ex:
 					event.reply('%s: failure replacing: %s' % (event.nick, ex))
 					return
@@ -217,10 +220,10 @@ def handle_msg(event, match):
 		event.reply('%s: no match found' % event.nick)
 	else:
 		# add to buffer
-		message_buffer.append([event.nick, msg[:200], False, event.channel.lower()])
+		message_buffer[channel].append([event.nick, msg[:200], False])
 		
 	# trim the buffer
-	message_buffer = message_buffer[-MAX_MESSAGES:]
+	message_buffer[channel] = message_buffer[channel][-MAX_MESSAGES:]
 
 def handle_welcome(event, match):
 	global NICKSERV_PASS
