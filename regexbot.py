@@ -78,11 +78,35 @@ if config.has_section('ignore'):
 			exit(1)
 
 for channel in CHANNELS:
-	message_buffer[channel.lower()] = []
-	last_message_times[channel.lower()] = last_message
-	channel_list.append(channel.lower())
+	c = channel.lower()
+	message_buffer[c] = []
+	last_message_times[c] = last_message
+	channel_list.append(c)
 
 # main code
+
+def flood_control(channel, when):
+	"Implements flood controls.  Returns True if the message should be handled, returns False if the floods are in."
+	global last_message, last_message_times
+	# get delta
+	channel_delta = when - last_message_times[channel]
+	global_delta = when - last_message
+	
+	# update times
+	last_message = last_message_times[channel] = when
+	
+	# think global
+	if global_delta < GLOBAL_FLOOD_COOLDOWN:
+		print "Global flood protection hit, %s of %s seconds were waited" % (global_delta.seconds, GLOBAL_FLOOD_COOLDOWN.seconds)
+		return False
+		
+	# act local
+	if channel_delta < CHANNEL_FLOOD_COOLDOWN:
+		print "Local %s flood protection hit, %s of %s seconds were waited" % (channel, channel_delta.seconds, CHANNEL_FLOOD_COOLDOWN.seconds)
+		return False
+		
+	# we're cool.
+	return True
 
 def handle_ctcp(event, match):
 	channel = event.channel.lower()
@@ -107,21 +131,7 @@ def handle_msg(event, match):
 		
 		if 'help' in lmsg or 'info' in lmsg or '?' in lmsg:
 			# now flood protect!
-			channel_delta = event.when - last_message
-			global_delta = event.when - last_message_times[channel]
-			last_message = event.when
-			last_message_times[channel] = event.when
-		
-			if channel_delta < CHANNEL_FLOOD_COOLDOWN:
-				# 5 seconds between requests per-channel
-				# any more are ignored
-				print "Flood protection hit, %s of %s seconds were waited" % (channel_delta.seconds, CHANNEL_FLOOD_COOLDOWN.seconds)
-				return
-
-			if global_delta < GLOBAL_FLOOD_COOLDOWN:
-				# 1 second between requests globally
-				# any more are ignored
-				print "Flood protection hit, %s of %s seconds were waited" % (global_delta.seconds, GLOBAL_FLOOD_COOLDOWN.seconds)
+			if not flood_control(channel, event.when):
 				return
 		
 			# give information
@@ -144,22 +154,7 @@ def handle_msg(event, match):
 		# handle regex
 		parts = msg.split(separator)
 		
-		# now flood protect!
-		channel_delta = event.when - last_message
-		global_delta = event.when - last_message_times[channel]
-		last_message = event.when
-		last_message_times[channel] = event.when
-	
-		if channel_delta < CHANNEL_FLOOD_COOLDOWN:
-			# 5 seconds between requests per-channel
-			# any more are ignored
-			print "Flood protection hit, %s of %s seconds were waited" % (channel_delta.seconds, CHANNEL_FLOOD_COOLDOWN.seconds)
-			return
-
-		if global_delta < GLOBAL_FLOOD_COOLDOWN:
-			# 1 second between requests globally
-			# any more are ignored
-			print "Flood protection hit, %s of %s seconds were waited" % (global_delta.seconds, GLOBAL_FLOOD_COOLDOWN.seconds)
+		if not flood_control(channel, event.when):
 			return
 		
 		if len(message_buffer[channel]) == 0:
