@@ -48,6 +48,25 @@ The bot features an ignore-list and "global cooldown timer", so it will ignore p
 
 ## twitterbot ##
 
-Requirements: pip install python-twitter oauth2
+Requirements: `pip install python-twitter oauth2`
+
+(Note: this requires `python-twitter`, not `twitter`.  The other library is incompatible.  You will need to delete it in order to use this.)
+
+This also has some geocoder support, you'll need an experimental branch of geopy.  Details here: http://code.google.com/p/geopy/wiki/ReverseGeocoding  You don't need to have this installed, you just won't get geocoder support without it.
+
+Upon posting a URL of a tweet, twitterbot will display the tweet.
+
+# merging with me in a non-exclusive union of source trees #
+
+Please send me pull requests on github: https://github.com/micolous/ircbots
+
+Either that or if there are too many MacBook-touting hipsters on github for your liking, you can email me a patch file.  There's a link on my website, http://micolous.id.au/
+
+I'm only going to merge bots that are general enough in purpose.  For example:
+
+ * Bot that randomly kicks peer out of the channel between every 6 and 49 minutes -- **rejected**
+ * Bot that randomly kicks anyone out of the channel based on user-definable rules -- **accepted**
+
+I'll keep an eye on the forks too, if there's something general enough or improvements to the library that'll get pulled in.
 
 

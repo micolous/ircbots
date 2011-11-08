@@ -24,6 +24,12 @@ from datetime import datetime, timedelta
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
+try:
+	from geopy import geocoders
+	geocoder = geocoders.Google()
+except ImportError:
+	print "geopy isn't installed, geocoder support disabled."
+	geocoder = None
 
 config = ConfigParser()
 try:
@@ -58,9 +64,17 @@ tweetURLRegex = re.compile(r"(http(s?):\/\/twitter.com\/.*\/statuse?s?\/([0-9]{0
 message_buffer = []
 last_message = datetime.now()
 flooders = []
-
+try:
+	# old versions of python-twitter use this.
+	twitterApi = twitter.Api()
+except AttributeError:
+	# 'twitter' in pip is an incompatible library.
+	print "You've installed the library called `twitter` from pip, rather than `python-twitter`.  Go fix that."
+	print "You'll need to completely remove the other library, try deleting /usr/local/lib/pythonX.X/dist-packages/twitter/"
+	exit(1)
+        
 def handle_msg(event, match):
-	global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL
+	global message_buffer, MAX_MESSAGES, last_message, flooders, CHANNEL, twitter_api
 	msg = event.text
 	
 	if event.channel.lower() != CHANNEL.lower():
@@ -69,7 +83,7 @@ def handle_msg(event, match):
 	
 	if tweetURLRegex.search(msg):
 		tweetIDRegex = re.compile(r".*/statuse?s?\/([0-9]{0,20})") 
-		twitterApi = twitter.Api()
+		
 		delta = event.when - last_message
 		last_message = event.when
 		error = ""
@@ -83,12 +97,19 @@ def handle_msg(event, match):
 		try:
 			tweet = twitterApi.GetStatus(tweetID)
 			try:
-				line = "%s => %s" %(tweet.user.screen_name, tweet.text.decode('utf-8').encode('utf-8').replace('\n', ' ').replace('\r',''))
+				line = "%s => %s" %(tweet.user.screen_name.encode('utf-8'), tweet.text.decode('utf-8').encode('utf-8').replace('\n', ' ').replace('\r',''))
 			except exceptions.UnicodeEncodeError:
 				print "Encoding error, fixing it up"
 				tweetUni = tweet.text.encode('utf-8').replace('\n', ' ').replace('\r','')
 				print tweetUni
 				line = "%s => %s" % (tweet.user.screen_name, tweetUni)
+				
+			if geocoder != None and tweet.geo != None and tweet.geo['type'] == 'Point':
+				try:
+					address, point = geocoder.reverse(tweet.geo['coordinates'])
+					line += " (from %s)" % address.encode('utf-8')
+				except NotImplementedError:
+					print "Warning: Your version of geopy lacks reverse geocoder support.  Not doing anything with the geographic data."
 				
 		except twitter.TwitterError, e:
 			if e.message == "No status found with that ID.":
