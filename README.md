@@ -52,7 +52,7 @@ Requirements: `pip install python-twitter oauth2`
 
 (Note: this requires `python-twitter`, not `twitter`.  The other library is incompatible.  You will need to delete it in order to use this.)
 
-This also has some geocoder support, you'll need an experimental branch of geopy.  Details here: http://code.google.com/p/geopy/wiki/ReverseGeocoding  You don't need to have this installed, you just won't get geocoder support without it.
+This also has some geocoder support, you'll need an experimental branch of geopy.  Details here: http://code.google.com/p/geopy/wiki/ReverseGeocoding  You don't need to have this installed, you just won't get geocoder support without it.  If you have an old version of python-twitter, such as the one in Debian 6, then you shouldn't install this.  Because that version of the library doesn't support geo extensions in Twitter.
 
 Upon posting a URL of a tweet, twitterbot will display the tweet.
 
