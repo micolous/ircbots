@@ -96,14 +96,9 @@ def handle_msg(event, match):
 		tweetID = tweetIDRegex.search(msg).groups()[0]
 		try:
 			tweet = twitterApi.GetStatus(tweetID)
-			#try:
+			
 			line = u"%s => %s" % (tweet.user.screen_name, tweet.text.replace('\n', ' ').replace('\r',''))
-			#except exceptions.UnicodeEncodeError:
-			#	print "Encoding error, fixing it up"
-			#	tweetUni = tweet.text.decode('utf-8').replace('\n', ' ').replace('\r','')
-			#	print tweetUni
-			#	line = "%s => %s" % (tweet.user.screen_name, tweetUni)
-				
+			
 			if geocoder != None and tweet.geo != None and tweet.geo['type'] == 'Point':
 				try:
 					address, point = geocoder.reverse(tweet.geo['coordinates'])
