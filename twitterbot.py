@@ -96,18 +96,18 @@ def handle_msg(event, match):
 		tweetID = tweetIDRegex.search(msg).groups()[0]
 		try:
 			tweet = twitterApi.GetStatus(tweetID)
-			try:
-				line = "%s => %s" %(tweet.user.screen_name.encode('utf-8'), tweet.text.decode('utf-8').encode('utf-8').replace('\n', ' ').replace('\r',''))
-			except exceptions.UnicodeEncodeError:
-				print "Encoding error, fixing it up"
-				tweetUni = tweet.text.encode('utf-8').replace('\n', ' ').replace('\r','')
-				print tweetUni
-				line = "%s => %s" % (tweet.user.screen_name, tweetUni)
+			#try:
+			line = u"%s => %s" % (tweet.user.screen_name, tweet.text.replace('\n', ' ').replace('\r',''))
+			#except exceptions.UnicodeEncodeError:
+			#	print "Encoding error, fixing it up"
+			#	tweetUni = tweet.text.decode('utf-8').replace('\n', ' ').replace('\r','')
+			#	print tweetUni
+			#	line = "%s => %s" % (tweet.user.screen_name, tweetUni)
 				
 			if geocoder != None and tweet.geo != None and tweet.geo['type'] == 'Point':
 				try:
 					address, point = geocoder.reverse(tweet.geo['coordinates'])
-					line += " (from %s)" % address.encode('utf-8')
+					line += u" (from %s)" % address
 				except NotImplementedError:
 					print "Warning: Your version of geopy lacks reverse geocoder support.  Not doing anything with the geographic data."
 				
@@ -124,7 +124,7 @@ def handle_msg(event, match):
 		if error:
 			irc.action(CHANNEL,"Error => %s" % error)
 		if line:
-			irc.action(CHANNEL, line)
+			irc.action(CHANNEL, line.encode('utf-8'))
 
 def handle_welcome(event, match):
 	global NICKSERV_PASS
