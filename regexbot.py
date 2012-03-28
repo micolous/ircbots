@@ -174,6 +174,13 @@ def handle_msg(event, match):
 		if len(parts[1]) == 0:
 			event.reply('%s: original string is empty' % event.nick)
 			return
+
+		if len(parts[1]) > 100:
+			event.reply("You are now banned")
+			try:
+				ignore_list.append(re.compile(event.nick, re.I))
+			except: pass
+			return
 			
 		ignore_case = 'i' in parts[3]
 		e = None
