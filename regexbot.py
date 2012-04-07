@@ -201,7 +201,7 @@ def handle_msg(event, match):
 				new_message = []
 				# replace the message in the buffer
 				try:
-					new_message = [message_buffer[channel][x][0],	e.sub(parts[2], message_buffer[channel][x][1]).replace('\n','').replace('\r','')[:200], message_buffer[channel][x][2]]
+					new_message = [message_buffer[channel][x][0],	e.sub(parts[2], message_buffer[channel][x][1]).replace('\n','').replace('\r','')[:450], message_buffer[channel][x][2]]
 					del message_buffer[channel][x]
 					message_buffer[channel].append(new_message)
 				except Exception, ex:
