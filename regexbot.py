@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import re, asyncore
+import regex, asyncore
 from datetime import datetime, timedelta
 from ConfigParser import ConfigParser
 from sys import argv, exit
@@ -73,7 +73,7 @@ channel_list = []
 if config.has_section('ignore'):
 	for k,v in config.items('ignore'):
 		try:
-			ignore_list.append(re.compile(v, re.I))
+			ignore_list.append(regex.compile(v, regex.I))
 		except Exception, ex:
 			print "Error compiling regular expression in ignore list (%s):" % k
 			print "  %s" % v
@@ -182,9 +182,9 @@ def handle_msg(event, match):
 		e = None
 		try:
 			if ignore_case:
-				e = re.compile(parts[1], re.I)
+				e = regex.compile(parts[1], regex.I)
 			else:
-				e = re.compile(parts[1])
+				e = regex.compile(parts[1])
 		except Exception, ex:
 			event.reply('%s: failure compiling regular expression: %s' % (event.nick, ex))
 			return
