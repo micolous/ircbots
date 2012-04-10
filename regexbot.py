@@ -18,12 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import re, asyncore
+import regex, asyncore
 from datetime import datetime, timedelta
 from ConfigParser import ConfigParser
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
+from copy import copy
 
 config = ConfigParser()
 try:
@@ -57,6 +58,8 @@ try: GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'global
 except: GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=1)
 try: MAX_MESSAGES = config.getint('regexbot', 'max_messages')
 except: MAX_MESSAGES = 25
+try: MAX_MESSAGE_SIZE = config.getint('regexbot', 'max_message_size')
+except: MAX_MESSAGE_SIZE = 200
 try: NICKSERV_PASS = config.get('regexbot', 'nickserv_pass')
 except: NICKSERV_PASS = None
 
@@ -70,7 +73,7 @@ channel_list = []
 if config.has_section('ignore'):
 	for k,v in config.items('ignore'):
 		try:
-			ignore_list.append(re.compile(v, re.I))
+			ignore_list.append(regex.compile(v, regex.I))
 		except Exception, ex:
 			print "Error compiling regular expression in ignore list (%s):" % k
 			print "  %s" % v
@@ -113,7 +116,7 @@ def handle_ctcp(event, match):
 	global message_buffer, MAX_MESSAGES, channel_list
 	if channel in channel_list:
 		if event.args[0] == "ACTION":
-			message_buffer[channel].append([event.nick, event.text[:200], True])
+			message_buffer[channel].append([event.nick, event.text[:MAX_MESSAGE_SIZE], True])
 			message_buffer[channel] = message_buffer[channel][-MAX_MESSAGES:]
 			return
 
@@ -174,48 +177,57 @@ def handle_msg(event, match):
 		if len(parts[1]) == 0:
 			event.reply('%s: original string is empty' % event.nick)
 			return
-			
+
 		ignore_case = 'i' in parts[3]
 		e = None
 		try:
 			if ignore_case:
-				e = re.compile(parts[1], re.I)
+				e = regex.compile(parts[1], regex.I)
 			else:
-				e = re.compile(parts[1])
+				e = regex.compile(parts[1])
 		except Exception, ex:
 			event.reply('%s: failure compiling regular expression: %s' % (event.nick, ex))
 			return
 		
 		# now we have a valid regular expression matcher!
 		for x in range(len(message_buffer[channel])-1, -1, -1):
-			if e.search(message_buffer[channel][x][1]) != None:
-				# match found!
-				
-				new_message = []
-				# replace the message in the buffer
-				try:
-					new_message = [message_buffer[channel][x][0],	e.sub(parts[2], message_buffer[channel][x][1]).replace('\n','').replace('\r','')[:200], message_buffer[channel][x][2]]
-					del message_buffer[channel][x]
-					message_buffer[channel].append(new_message)
-				except Exception, ex:
-					event.reply('%s: failure replacing: %s' % (event.nick, ex))
-					return
-				
-				# now print the new text
-				print new_message
-				if new_message[2]:
-					# action
-					event.reply((' * %s %s' % (new_message[0], new_message[1]))[:200])
-				else:
-					# normal message
-					event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:200])
+			result = [None,None]
+			thread = RegexThread(e,parts[2],message_buffer[channel][x][1],result)
+			thread.start()
+			try:
+				thread.join(1)
+				while thread.isAlive():
+					thread.raiseExc(TimeoutException)
+					time.sleep(0.1)
+
+				if result[0] == None:
+					continue
+
+			except Exception, ex:
+				event.reply('%s: failure replacing: %s' % (event.nick, ex))
 				return
+
+			new_message = []
+			# replace the message in the buffer
+			new_message = [message_buffer[channel][x][0],result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
+			del message_buffer[channel][x]
+			message_buffer[channel].append(new_message)
+			
+			# now print the new text
+			print new_message
+			if new_message[2]:
+				# action
+				event.reply((' * %s %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+			else:
+				# normal message
+				event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+			return
 		
 		# no match found
 		event.reply('%s: no match found' % event.nick)
 	else:
 		# add to buffer
-		message_buffer[channel].append([event.nick, msg[:200], False])
+		message_buffer[channel].append([event.nick, msg[:MAX_MESSAGE_SIZE], False])
 		
 	# trim the buffer
 	message_buffer[channel] = message_buffer[channel][-MAX_MESSAGES:]
