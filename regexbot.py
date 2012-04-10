@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import regex, asyncore
+import regex, asyncore, threading, inspect, ctypes, time
 from datetime import datetime, timedelta
 from ConfigParser import ConfigParser
 from sys import argv, exit
@@ -190,12 +190,14 @@ def handle_msg(event, match):
 			return
 		
 		# now we have a valid regular expression matcher!
+		timeout = time.time() + 1
 		for x in range(len(message_buffer[channel])-1, -1, -1):
+			if time.time() > timeout: break
 			result = [None,None]
 			thread = RegexThread(e,parts[2],message_buffer[channel][x][1],result)
 			thread.start()
 			try:
-				thread.join(1)
+				thread.join(0.1)
 				while thread.isAlive():
 					thread.raiseExc(TimeoutException)
 					time.sleep(0.1)
@@ -203,6 +205,8 @@ def handle_msg(event, match):
 				if result[0] == None:
 					continue
 
+			except KeyboardInterrupt:
+				raise KeyboardInterrupt
 			except Exception, ex:
 				event.reply('%s: failure replacing: %s' % (event.nick, ex))
 				return
@@ -238,6 +242,47 @@ def handle_welcome(event, match):
 	event.connection.usermode("+B")
 	if NICKSERV_PASS != None:
 		event.connection.todo(['NickServ', 'identify', NICKSERV_PASS])
+
+# from http://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python/325528#325528
+def _async_raise(tid, exctype):
+	'''Raises an exception in the threads with id tid'''
+	if not inspect.isclass(exctype):
+		raise TypeError("Only types can be raised (not instances)")
+	res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid,
+												  ctypes.py_object(exctype))
+	if res == 0:
+		raise ValueError("invalid thread id")
+	elif res != 1:
+		# "if it returns a number greater than one, you're in trouble,
+		# and you should call it again with exc=NULL to revert the effect"
+		ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
+		raise SystemError("PyThreadState_SetAsyncExc failed")
+
+class RegexThread(threading.Thread):
+	def __init__(self,regex,replace,message,result):
+		threading.Thread.__init__(self)
+		self.regex = regex
+		self.replace = replace
+		self.message = message
+		self.result = result
+
+	def run(self):
+		try:
+			self.result[0] = self.regex.search(self.message)
+		except MemoryError:
+			self.result[0] = None
+			return
+		if self.result[0] != None:
+			self.result[1] = self.regex.sub(self.replace,self.message)
+
+	def raiseExc(self, exctype):
+		if not self.isAlive():
+			raise threading.ThreadError("the thread is not active")
+		_async_raise( self.ident, exctype )
+
+class TimeoutException(Exception):
+	pass
+
 
 irc = IRC(nick=NICK, start_channels=CHANNELS, version=VERSION)
 irc.bind(handle_msg, PRIVMSG)

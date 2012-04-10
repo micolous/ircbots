@@ -34,6 +34,8 @@ If you want more complete functionality, you should set up proper IRC links.  Th
 
 ## regexbot ##
 
+Requires python 2.6+ and regex libraries http://pypi.python.org/pypi/regex
+
 A simple IRC bot that keeps a rotating list of messages to perform regular expressions on.  By default it keeps 25 messages in it's buffer, but this can be changed with a configuration change.
 
 It records all messages it sees, except regular expressions.  You perform a substitution like this:
