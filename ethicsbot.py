@@ -53,7 +53,9 @@ ETHICAL_STATES = [
 	'unethical',
 	'ethical',
 	'unsure',
-]	
+]
+
+ETHICAL_STATES_COUNT = len(ETHICAL_STATES)
 
 config = ConfigParser()
 try:
@@ -141,9 +143,10 @@ def handle_msg(event, match):
 		
 		ethical = 0
 		for c in h.digest():
-			for x in xrange(1,9):
-				if ord(c) & (2 ** x) > 1:
-					ethical = (ethical + 1) % 3
+			for x in xrange(0,8):
+				if ord(c) & (2 ** x) > 0:
+					ethical += 1
+			ethical %= ETHICAL_STATES_COUNT
 		
 		event.reply('%s: (%s) %s' % (event.nick, ETHICAL_STATES[ethical], random.choice(ETHICAL_MESSAGES[ethical])))
 
