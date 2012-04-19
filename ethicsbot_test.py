@@ -48,7 +48,7 @@ def test_ethics(states=3, iterations=1000, use_pbar=True):
 	stats = [0] * states
 	
 	if use_pbar:
-		progress = progressbar.ProgressBar(widgets=PBAR_WIDGET_STYLE, maxval=iterations)
+		progress = progressbar.ProgressBar(widgets=PBAR_WIDGET_STYLE, maxval=iterations).start()
 	else:
 		progress = Object()
 		progress.update = lambda x: None
