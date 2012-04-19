@@ -61,7 +61,7 @@ def test_ethics(states=3, iterations=1000, use_pbar=True):
 		for y in range(l):
 			o += chr(randint(0, 128))
 		
-		stats[ethical_state(o)] += 1
+		stats[ethical_state(o, states)] += 1
 		progress.update(x)
 		
 	
