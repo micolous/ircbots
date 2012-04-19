@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 ethicsbot: Acts as automated ethical consultant on IRC.  Not a lawyer.  Like a magic 8-ball, except always gives the same answer to the same question.
-Copyright 2010 - 2011 Michael Farrell <http://micolous.id.au>
+Copyright 2010 - 2012 Michael Farrell <http://micolous.id.au>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
