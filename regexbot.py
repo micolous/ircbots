@@ -190,7 +190,7 @@ def handle_msg(event, match):
 			return
 		
 		# now we have a valid regular expression matcher!
-		timeout = time.time() + 1
+		timeout = time.time() + 10
 		for x in range(len(message_buffer[channel])-1, -1, -1):
 			if time.time() > timeout: break
 			result = [None,None]
@@ -205,8 +205,6 @@ def handle_msg(event, match):
 				if result[0] == None:
 					continue
 
-			except KeyboardInterrupt:
-				raise KeyboardInterrupt
 			except Exception, ex:
 				event.reply('%s: failure replacing: %s' % (event.nick, ex))
 				return
