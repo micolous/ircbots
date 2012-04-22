@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 ethicsbot: Acts as automated ethical consultant on IRC.  Not a lawyer.  Like a magic 8-ball, except always gives the same answer to the same question.
-Copyright 2010 - 2011 Michael Farrell <http://micolous.id.au>
+Copyright 2010 - 2012 Michael Farrell <http://micolous.id.au>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -53,7 +53,9 @@ ETHICAL_STATES = [
 	'unethical',
 	'ethical',
 	'unsure',
-]	
+]
+
+ETHICAL_STATES_COUNT = len(ETHICAL_STATES)
 
 config = ConfigParser()
 try:
@@ -141,9 +143,10 @@ def handle_msg(event, match):
 		
 		ethical = 0
 		for c in h.digest():
-			for x in xrange(1,9):
-				if ord(c) & (2 ** x) > 1:
-					ethical = (ethical + 1) % 3
+			for x in xrange(0,8):
+				if ord(c) & (2 ** x) > 0:
+					ethical += 1
+			ethical %= ETHICAL_STATES_COUNT
 		
 		event.reply('%s: (%s) %s' % (event.nick, ETHICAL_STATES[ethical], random.choice(ETHICAL_MESSAGES[ethical])))
 
