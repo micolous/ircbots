@@ -202,7 +202,7 @@ def handle_msg(event, match):
 					thread.raiseExc(TimeoutException)
 					time.sleep(0.1)
 
-				if result[0] == None:
+				if result[0] == None or result[1] == None:
 					continue
 
 			except Exception, ex:
