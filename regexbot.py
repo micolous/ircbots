@@ -142,9 +142,9 @@ def handle_msg(event, match):
 			return
 			
 	
-	valid_separaters = ['@','#','%',':',';','/']
+	valid_separators = ['@','#','%',':',';','/','\xe1']
 	separator = '/'
-	if msg.startswith('s') and len(msg) > 1 and msg[1] in valid_separaters:
+	if msg.startswith('s') and len(msg) > 1 and msg[1] in valid_separators:
 		separator = msg[1]
 		
 	if msg.startswith('s' + separator):
