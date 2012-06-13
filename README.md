@@ -66,7 +66,7 @@ Either that or if there are too many MacBook-touting hipsters on github for your
 
 I'm only going to merge bots that are general enough in purpose.  For example:
 
- * Bot that randomly kicks peer out of the channel between every 6 and 49 minutes -- **rejected**
+ * Bot that randomly kicks @peerau out of the channel between every 6 and 49 minutes -- **rejected**
  * Bot that randomly kicks anyone out of the channel based on user-definable rules -- **accepted**
 
 I'll keep an eye on the forks too, if there's something general enough or improvements to the library that'll get pulled in.
