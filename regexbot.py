@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import regex, asyncore, threading, inspect, ctypes, time
+import asyncore, threading, inspect, ctypes, time
+import re as regex
 from datetime import datetime, timedelta
 from ConfigParser import ConfigParser
 from sys import argv, exit
@@ -144,9 +145,94 @@ def handle_msg(event, match):
 	
 	valid_separators = ['@','#','%',':',';','/','\xe1']
 	separator = '/'
-	if msg.startswith('s') and len(msg) > 1 and msg[1] in valid_separators:
+	if (msg.startswith('s') or msg.startswith('y')) and len(msg) > 1 and msg[1] in valid_separators:
 		separator = msg[1]
 		
+	if msg.startswith('y' + separator):
+		for item in ignore_list:
+			if item.search(event.origin) != None:
+				# ignore list item hit
+				print "Ignoring message from %s because of: %s" % (event.origin, item.pattern)
+				return
+		
+		# handle regex
+		parts = msg.split(separator)
+		
+		if not flood_control(channel, event.when):
+			return
+		
+		if len(message_buffer[channel]) == 0:
+			event.reply('%s: message buffer is empty' % event.nick)
+			return
+		
+		if len(parts) == 3:
+			event.reply('%s: invalid translation expression, you forgot the trailing separator, dummy' % event.nick)
+			return
+		
+		if len(parts) != 4:
+			# not a valid regex
+			event.reply('%s: invalid translation expression, not the right amount of separators' % event.nick)
+			return
+		
+		# find messages matching the string
+		if len(parts[1]) == 0:
+			event.reply('%s: original string is empty' % event.nick)
+			return
+
+		if 'r' not in parts[3] and len(parts[1]) != len(parts[2]):
+			event.reply('%s: Translation is different length!'% event.nick)
+			return
+
+		table = map(chr, range(256))
+		if 'r' in parts[3]:
+			fromchars = []
+			tochars = []
+			for c in parts[1]:
+				b = ord(c)
+				t = []
+				while b > 0:
+					t.append(b & 0xff)
+					b = b >> 8
+				t.reverse()
+				fromchars.extend(t)
+
+			for c in parts[2]:
+				b = ord(c)
+				t = []
+				while b > 0:
+					t.append(b & 0xff)
+					b = b >> 8
+				t.reverse()
+				tochars.extend(t)
+			for i in xrange(len(fromchars)):
+				table[fromchars[i]] = chr(tochars[i])
+		else:
+			for i in xrange(len(parts[1])):
+				table[ord(parts[1][i])] = parts[2][i]
+
+
+		result = message_buffer[channel][-1][1].translate(''.join(table))
+		if 'r' in parts[3]:
+			result = unicode(result,'utf-8','ignore').encode('utf-8')
+
+		new_message = []
+		# replace the message in the buffer
+		new_message = [message_buffer[channel][-1][0],result[:MAX_MESSAGE_SIZE], message_buffer[channel][-1][2]]
+		del message_buffer[channel][-1]
+		message_buffer[channel].append(new_message)
+		
+		# now print the new text
+		print new_message
+		if new_message[2]:
+			# action
+			event.reply((' * %s %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+		else:
+			# normal message
+			event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+		return
+		
+
+
 	if msg.startswith('s' + separator):
 		for item in ignore_list:
 			if item.search(event.origin) != None:
