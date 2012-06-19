@@ -236,26 +236,38 @@ def handle_msg(event, match):
 					event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
 				return
 			
-			# no match found
-			event.reply('%s: no match found' % event.nick)
 
 		if str_translate:
 			if len(parts[1]) != len(parts[2]) or len(parts[1]) < 1:
 				event.reply('%s: Translation is different length!'% event.nick)
 				return
+			# make translation table
 			table = maketrans(parts[1], parts[2])
-			result = translate(message_buffer[channel][-1][1], table)
-			new_message = [message_buffer[channel][-1][0],result[:MAX_MESSAGE_SIZE], message_buffer[channel][-1][2]]
-			del message_buffer[channel][-1]
-			message_buffer[channel].append(new_message)
-			print new_message
-			if new_message[2]:
-				# action
-				event.reply((' * %s %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
-			else:
-				# normal message
-				event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
-			return
+
+			for num in xrange(len(message_buffer[channel])-1, -1, -1):
+				# make new message, test if changes occur; if not, continue
+				result = translate(message_buffer[channel][num][1], table)
+				if result == message_buffer[channel][num][1]:
+					continue
+				
+				# build new message, and insert into buffer
+				new_message = [message_buffer[channel][num][0],result[:MAX_MESSAGE_SIZE], message_buffer[channel][num][2]]
+				del message_buffer[channel][num]
+				message_buffer[channel].append(new_message)
+
+				# print new message and send to server
+				print new_message
+				if new_message[2]:
+					# action
+					event.reply((' * %s %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+				else:
+					# normal message
+					event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+				return
+
+		# no match found
+		event.reply('%s: no match found' % event.nick)
+			
 
 	else:
 		# add to buffer
