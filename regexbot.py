@@ -18,14 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import asyncore, threading, inspect, ctypes, time
-import re as regex
+import regex, asyncore, threading, inspect, ctypes, time
 from datetime import datetime, timedelta
 from ConfigParser import ConfigParser
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
 from copy import copy
+from string import maketrans, translate
 
 config = ConfigParser()
 try:
@@ -142,13 +142,23 @@ def handle_msg(event, match):
 			event.reply('%s: I am regexbot, the interactive IRC regular expression tool, originally written by micolous.  Source/docs/version: %s' % (event.nick, VERSION))
 			return
 			
+	str_replace = False
+	str_translate = False
+
+	if msg.startswith('s'):
+		str_replace = True
+	if msg.startswith('y'):
+		str_translate = True
 	
 	valid_separators = ['@','#','%',':',';','/','\xe1']
 	separator = '/'
-	if (msg.startswith('s') or msg.startswith('y')) and len(msg) > 1 and msg[1] in valid_separators:
+	if (str_replace or str_translate) and len(msg) > 1 and msg[1] in valid_separators:
 		separator = msg[1]
-		
-	if msg.startswith('y' + separator):
+	else:
+		str_replace = False
+		str_translate = False
+
+	if (str_replace or str_translate) and msg[1] == separator:
 		for item in ignore_list:
 			if item.search(event.origin) != None:
 				# ignore list item hit
@@ -178,130 +188,66 @@ def handle_msg(event, match):
 		if len(parts[1]) == 0:
 			event.reply('%s: original string is empty' % event.nick)
 			return
-
-		if 'r' not in parts[3] and len(parts[1]) != len(parts[2]):
-			event.reply('%s: Translation is different length!'% event.nick)
-			return
-
-		table = map(chr, range(256))
-		if 'r' in parts[3]:
-			fromchars = []
-			tochars = []
-			for c in parts[1]:
-				b = ord(c)
-				t = []
-				while b > 0:
-					t.append(b & 0xff)
-					b = b >> 8
-				t.reverse()
-				fromchars.extend(t)
-
-			for c in parts[2]:
-				b = ord(c)
-				t = []
-				while b > 0:
-					t.append(b & 0xff)
-					b = b >> 8
-				t.reverse()
-				tochars.extend(t)
-			for i in xrange(len(fromchars)):
-				table[fromchars[i]] = chr(tochars[i])
-		else:
-			for i in xrange(len(parts[1])):
-				table[ord(parts[1][i])] = parts[2][i]
-
-
-		result = message_buffer[channel][-1][1].translate(''.join(table))
-		if 'r' in parts[3]:
-			result = unicode(result,'utf-8','ignore').encode('utf-8')
-
-		new_message = []
-		# replace the message in the buffer
-		new_message = [message_buffer[channel][-1][0],result[:MAX_MESSAGE_SIZE], message_buffer[channel][-1][2]]
-		del message_buffer[channel][-1]
-		message_buffer[channel].append(new_message)
-		
-		# now print the new text
-		print new_message
-		if new_message[2]:
-			# action
-			event.reply((' * %s %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
-		else:
-			# normal message
-			event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
-		return
-		
-
-
-	if msg.startswith('s' + separator):
-		for item in ignore_list:
-			if item.search(event.origin) != None:
-				# ignore list item hit
-				print "Ignoring message from %s because of: %s" % (event.origin, item.pattern)
-				return
-		
-		# handle regex
-		parts = msg.split(separator)
-		
-		if not flood_control(channel, event.when):
-			return
-		
-		if len(message_buffer[channel]) == 0:
-			event.reply('%s: message buffer is empty' % event.nick)
-			return
-		
-		if len(parts) == 3:
-			event.reply('%s: invalid regular expression, you forgot the trailing separator, dummy' % event.nick)
-			return
-		
-		if len(parts) != 4:
-			# not a valid regex
-			event.reply('%s: invalid regular expression, not the right amount of separators' % event.nick)
-			return
-		
-		# find messages matching the string
-		if len(parts[1]) == 0:
-			event.reply('%s: original string is empty' % event.nick)
-			return
-
-		ignore_case = 'i' in parts[3]
-		e = None
-		try:
-			if ignore_case:
-				e = regex.compile(parts[1], regex.I)
-			else:
-				e = regex.compile(parts[1])
-		except Exception, ex:
-			event.reply('%s: failure compiling regular expression: %s' % (event.nick, ex))
-			return
-		
-		# now we have a valid regular expression matcher!
-		timeout = time.time() + 10
-		for x in range(len(message_buffer[channel])-1, -1, -1):
-			if time.time() > timeout: break
-			result = [None,None]
-			thread = RegexThread(e,parts[2],message_buffer[channel][x][1],result)
-			thread.start()
+		if str_replace:
+			ignore_case = 'i' in parts[3]
+			e = None
 			try:
-				thread.join(0.1)
-				while thread.isAlive():
-					thread.raiseExc(TimeoutException)
-					time.sleep(0.1)
-
-				if result[0] == None or result[1] == None:
-					continue
-
+				if ignore_case:
+					e = regex.compile(parts[1], regex.I)
+				else:
+					e = regex.compile(parts[1])
 			except Exception, ex:
-				event.reply('%s: failure replacing: %s' % (event.nick, ex))
+				event.reply('%s: failure compiling regular expression: %s' % (event.nick, ex))
 				return
-
-			new_message = []
-			# replace the message in the buffer
-			new_message = [message_buffer[channel][x][0],result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
-			del message_buffer[channel][x]
-			message_buffer[channel].append(new_message)
 			
-			# now print the new text
+			# now we have a valid regular expression matcher!
+			timeout = time.time() + 10
+			for x in range(len(message_buffer[channel])-1, -1, -1):
+				if time.time() > timeout: break
+				result = [None,None]
+				thread = RegexThread(e,parts[2],message_buffer[channel][x][1],result)
+				thread.start()
+				try:
+					thread.join(0.1)
+					while thread.isAlive():
+						thread.raiseExc(TimeoutException)
+						time.sleep(0.1)
+
+					if result[0] == None or result[1] == None:
+						continue
+
+				except Exception, ex:
+					event.reply('%s: failure replacing: %s' % (event.nick, ex))
+					return
+
+				new_message = []
+				# replace the message in the buffer
+				new_message = [message_buffer[channel][x][0],result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
+				del message_buffer[channel][x]
+				message_buffer[channel].append(new_message)
+				
+				# now print the new text
+				print new_message
+				if new_message[2]:
+					# action
+					event.reply((' * %s %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+				else:
+					# normal message
+					event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
+				return
+			
+			# no match found
+			event.reply('%s: no match found' % event.nick)
+
+		if str_translate:
+			if len(parts[1]) != len(parts[2]) or len(parts[1]) < 1:
+				event.reply('%s: Translation is different length!'% event.nick)
+				return
+			table = maketrans(parts[1], parts[2])
+			result = translate(message_buffer[channel][-1][1], table)
+			new_message = [message_buffer[channel][-1][0],result[:MAX_MESSAGE_SIZE], message_buffer[channel][-1][2]]
+			del message_buffer[channel][-1]
+			message_buffer[channel].append(new_message)
 			print new_message
 			if new_message[2]:
 				# action
@@ -310,9 +256,7 @@ def handle_msg(event, match):
 				# normal message
 				event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
 			return
-		
-		# no match found
-		event.reply('%s: no match found' % event.nick)
+
 	else:
 		# add to buffer
 		message_buffer[channel].append([event.nick, msg[:MAX_MESSAGE_SIZE], False])
