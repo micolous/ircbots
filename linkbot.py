@@ -92,6 +92,10 @@ class Network(object):
 		self.irc.bind(self.handle_msg, PRIVMSG)
 		self.irc.bind(self.handle_welcome, RPL_WELCOME)
 		self.irc.bind(self.handle_ctcp, CTCP_REQUEST)
+		self.irc.bind(self.handle_join, JOIN)
+		self.irc.bind(self.handle_part, PART)
+		self.irc.bind(self.handle_quit, QUIT)
+		
 
 		
 	def add_to_buffer(self, msg):
@@ -130,7 +134,19 @@ class Network(object):
 		
 		# indicates we're now active so processing the event queue is ok.
 		self.active = True
+	
+	def handle_join(self, event, match):
+		if event.channel.lower() == self.channel:
+			self.other_network.add_to_buffer("--> %s (%s@%s) has joined" % (event.nick, event.user, event.host))
+	
+	def handle_part(self, event, match):
+		if event.channel.lower() == self.channel:
+			self.other_network.add_to_buffer("<-- %s (%s@%s) has left (%s)" % (event.nick, event.user, event.host, event.text))
+	
+	def handle_quit(self, event, match):
+		self.other_network.add_to_buffer("<-- %s (%s@%s) has quit (%s)" % (event.nick, event.user, event.host, event.text))
 		
+	
 	def connect(self):
 		# spawn event loop
 		start_new_thread(self.process_queue_loop, ())
