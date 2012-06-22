@@ -251,7 +251,7 @@ def handle_msg(event, match):
 					continue
 				
 				# build new message, and insert into buffer
-				new_message = [message_buffer[channel][num][0],result[:MAX_MESSAGE_SIZE], message_buffer[channel][num][2]]
+				new_message = [message_buffer[channel][num][0],result.replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][num][2]]
 				del message_buffer[channel][num]
 				message_buffer[channel].append(new_message)
 
