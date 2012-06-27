@@ -75,6 +75,8 @@ except:
 SERVER = config.get('ethicsbot', 'server')
 try: PORT = config.getint('ethicsbot', 'port')
 except: PORT = DEFAULT_PORT
+try: IPV6 = ( config.getint('ethicsbot', 'ipv6_support') == "yes" )
+except: IPV6 = False
 NICK = config.get('ethicsbot', 'nick')
 CHANNEL = config.get('ethicsbot', 'channel')
 VERSION = 'ethicsbot; https://github.com/micolous/ircbots/; %s'
@@ -161,6 +163,6 @@ irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
 irc.bind(handle_msg, PRIVMSG)
 irc.bind(handle_welcome, RPL_WELCOME)
 
-irc.make_conn(SERVER, PORT)
+irc.make_conn(SERVER, PORT, ipv6=IPV6)
 asyncore.loop()
 

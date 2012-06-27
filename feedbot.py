@@ -43,6 +43,8 @@ except:
 SERVER = config.get('feedbot', 'server')
 try: PORT = config.getint('feedbot', 'port')
 except: PORT = DEFAULT_PORT
+try: IPV6 = ( config.getint('feedbot', 'ipv6_support') == "yes" )
+except: IPV6 = False
 NICK = config.get('feedbot', 'nick')
 CHANNEL = config.get('feedbot', 'channel')
 VERSION = 'feedbot; https://github.com/micolous/ircbots/; %s'
@@ -146,7 +148,7 @@ def handle_welcome(event, match):
 
 irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
 irc.bind(handle_welcome, RPL_WELCOME)
-irc.make_conn(SERVER, PORT)
+irc.make_conn(SERVER, PORT, ipv6=IPV6)
 start_new_thread(feed_updater, (irc,))
 asyncore.loop()
 

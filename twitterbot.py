@@ -48,6 +48,8 @@ except:
 SERVER = config.get('twitterbot', 'server')
 try: PORT = config.getint('twitterbot', 'port')
 except: PORT = DEFAULT_PORT
+try: IPV6 = ( config.getint('twitterbot', 'ipv6_support') == "yes" )
+except: IPV6 = False
 NICK = config.get('twitterbot', 'nick')
 CHANNEL = config.get('twitterbot', 'channel')
 VERSION = 'twitterbot; https://github.com/micolous/ircbots/; %s'
@@ -132,6 +134,6 @@ irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
 irc.bind(handle_msg, PRIVMSG)
 irc.bind(handle_welcome, RPL_WELCOME)
 
-irc.make_conn(SERVER, PORT)
+irc.make_conn(SERVER, PORT, ipv6=IPV6)
 asyncore.loop()
 

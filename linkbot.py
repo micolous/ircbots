@@ -58,6 +58,10 @@ class Network(object):
 			self.port = config.getint(section, 'port')
 		except:
 			self.port = DEFAULT_PORT
+
+
+		try: self.ipv6 = ( config.getint('linkbot', 'ipv6_support') == "yes" )
+		except: self.ipv6 = False
 		
 		self.nick = config.get(section, 'nick')
 		self.channel = config.get(section, 'channel').lower()
@@ -135,7 +139,7 @@ class Network(object):
 		# spawn event loop
 		start_new_thread(self.process_queue_loop, ())
 		
-		self.irc.make_conn(self.server, self.port)
+		self.irc.make_conn(self.server, self.port, ipv6=self.ipv6)
 		
 	def process_queue_loop(self):
 		while True:

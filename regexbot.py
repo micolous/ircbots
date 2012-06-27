@@ -45,6 +45,8 @@ except:
 SERVER = config.get('regexbot', 'server')
 try: PORT = config.getint('regexbot', 'port')
 except: PORT = DEFAULT_PORT
+try: IPV6 = ( config.getint('regexbot', 'ipv6_support') == "yes" )
+except: IPV6 = False
 NICK = config.get('regexbot', 'nick')
 CHANNELS = config.get('regexbot', 'channels').split()
 try: VERSION = config.get('regexbot', 'version') + '; %s'
@@ -329,6 +331,6 @@ irc.bind(handle_msg, PRIVMSG)
 irc.bind(handle_welcome, RPL_WELCOME)
 irc.bind(handle_ctcp, CTCP_REQUEST)
 
-irc.make_conn(SERVER, PORT)
+irc.make_conn(SERVER, PORT, ipv6=IPV6)
 asyncore.loop()
 

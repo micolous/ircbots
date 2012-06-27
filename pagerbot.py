@@ -46,6 +46,8 @@ except:
 SERVER = config.get('pagerbot', 'server')
 try: PORT = config.getint('pagerbot', 'port')
 except: PORT = DEFAULT_PORT
+try: IPV6 = ( config.getint('pagerbot', 'ipv6_support') == "yes" )
+except: IPV6 = False
 NICK = config.get('pagerbot', 'nick')
 CHANNEL = config.get('pagerbot', 'channel')
 VERSION = 'pagerbot; https://github.com/micolous/ircbots/; %s'
@@ -110,7 +112,7 @@ def handle_welcome(event, match):
 
 irc = IRC(nick=NICK, start_channels=[CHANNEL], version=VERSION)
 irc.bind(handle_welcome, RPL_WELCOME)
-irc.make_conn(SERVER, PORT)
+irc.make_conn(SERVER, PORT, ipv6=IPV6)
 start_new_thread(feed_updater, (irc,))
 asyncore.loop()
 
