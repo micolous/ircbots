@@ -178,12 +178,12 @@ def handle_msg(event, match):
 			return
 		
 		if len(parts) == 3:
-			event.reply('%s: invalid translation expression, you forgot the trailing separator, dummy' % event.nick)
+			event.reply('%s: invalid expression, you forgot the trailing separator, dummy' % event.nick)
 			return
 		
 		if len(parts) != 4:
 			# not a valid regex
-			event.reply('%s: invalid translation expression, not the right amount of separators' % event.nick)
+			event.reply('%s: invalid expression, not the right amount of separators' % event.nick)
 			return
 		
 		# find messages matching the string
