@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 linkbot: IRC server linking tool
-Copyright 2010 - 2011 Michael Farrell <http://micolous.id.au>
+Copyright 2010 - 2012 Michael Farrell <http://micolous.id.au>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, asyncore
 from datetime import datetime, timedelta
-from ConfigParser import ConfigParser
+from configparser_plus import ConfigParserPlus
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
@@ -28,7 +28,35 @@ from thread import start_new_thread
 from time import sleep
 from Queue import Queue, Full
 
-config = ConfigParser()
+DEFAULT_CONFIG = {
+	'linkbot': {
+		'version': 'linkbot; https://github.com/micolous/ircbots/'
+	},
+	
+	'linkbot1': {
+		'server': 'localhost',
+		'port': DEFAULT_PORT,
+		'ipv6': 'no',
+		'nick': 'linkbot1',
+		'channel': '#test',
+		'process_every': 1,
+		'max_message_length': 512,
+		'max_messages': 25
+	},
+		
+	'linkbot2': {
+		'server': 'localhost',
+		'port': DEFAULT_PORT,
+		'ipv6': 'no',
+		'nick': 'linkbot2',
+		'channel': '#test2',
+		'process_every': 1,
+		'max_message_length': 512,
+		'max_messages': 25
+	},
+}	
+
+config = ConfigParserPlus(DEFAULT_CONFIG)
 try:
 	config.readfp(open(argv[1]))
 except:
@@ -60,7 +88,7 @@ class Network(object):
 			self.port = DEFAULT_PORT
 
 
-		try: self.ipv6 = ( config.getint('linkbot', 'ipv6_support') == "yes" )
+		try: self.ipv6 = config.getboolean('linkbot', 'ipv6')
 		except: self.ipv6 = False
 		
 		self.nick = config.get(section, 'nick')

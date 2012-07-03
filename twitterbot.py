@@ -3,6 +3,7 @@
 """
 twitterbot: Shows tweets for Twitter URLs posted on IRC.
 Copyright 2011 Rob McFadzean
+Copyright 2011 - 2012 Michael Farrell
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import asyncore, random, re, twitter, urllib2, exceptions
-from ConfigParser import ConfigParser
+from configparser_plus import ConfigParserPlus
 from datetime import datetime, timedelta
 from sys import argv, exit
 from ircasync import *
@@ -31,7 +32,20 @@ except ImportError:
 	print "geopy isn't installed, geocoder support disabled."
 	geocoder = None
 
-config = ConfigParser()
+
+DEFAULT_CONFIG = {
+	'twitterbot': {
+		'server': 'localhost',
+		'port': DEFAULT_PORT,
+		'ipv6': 'no',
+		'nick': 'twitterbot',
+		'channel': '#test',
+		'flood_cooldown': 5,
+		'version': 'twitterbot; https://github.com/micolous/ircbots/',
+	}
+}
+
+config = ConfigParser(DEFAULT_CONFIG)
 try:
 	config.readfp(open(argv[1]))
 except:
@@ -46,19 +60,16 @@ except:
 		exit(1)
 
 SERVER = config.get('twitterbot', 'server')
-try: PORT = config.getint('twitterbot', 'port')
-except: PORT = DEFAULT_PORT
-try: IPV6 = ( config.getint('twitterbot', 'ipv6_support') == "yes" )
-except: IPV6 = False
+PORT = config.getint('twitterbot', 'port')
+IPV6 = config.getboolean('twitterbot', 'ipv6')
 NICK = config.get('twitterbot', 'nick')
 CHANNEL = config.get('twitterbot', 'channel')
-VERSION = 'twitterbot; https://github.com/micolous/ircbots/; %s'
+VERSION = config.get('regexbot', 'version') + '; %s'
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
 
-try: FLOOD_COOLDOWN = timedelta(seconds=config.getint('twitterbot', 'flood_cooldown'))
-except: FLOOD_COOLDOWN = timedelta(seconds=5)
+FLOOD_COOLDOWN = timedelta(seconds=config.getint('twitterbot', 'flood_cooldown'))
 try: NICKSERV_PASS = config.get('twitterbot', 'nickserv_pass')
 except: NICKSERV_PASS = None
 

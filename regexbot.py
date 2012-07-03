@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 regexbot: IRC-based regular expression evaluation tool.
-Copyright 2010 - 2011 Michael Farrell <http://micolous.id.au>
+Copyright 2010 - 2012 Michael Farrell <http://micolous.id.au>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -20,14 +20,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import regex, asyncore, threading, inspect, ctypes, time
 from datetime import datetime, timedelta
-from ConfigParser import ConfigParser
+from configparser_plus import ConfigParserPlus
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
 from copy import copy
 from string import maketrans, translate
 
-config = ConfigParser()
+DEFAULT_CONFIG = {
+	'regexbot': {
+		'server': 'localhost',
+		'port': DEFAULT_PORT,
+		'ipv6': 'no',
+		'nick': 'regexbot',
+		'channels': '#test',
+		'channel_flood_cooldown': 5,
+		'global_flood_cooldown': 1,
+		'max_messages': 25,
+		'max_message_size': 200,
+		'version': 'regexbot; https://github.com/micolous/ircbots/',
+	}
+}
+
+config = ConfigParserPlus(DEFAULT_CONFIG)
 try:
 	config.readfp(open(argv[1]))
 except:
@@ -43,26 +58,19 @@ except:
 
 # read config
 SERVER = config.get('regexbot', 'server')
-try: PORT = config.getint('regexbot', 'port')
-except: PORT = DEFAULT_PORT
-try: IPV6 = ( config.getint('regexbot', 'ipv6_support') == "yes" )
-except: IPV6 = False
+PORT = config.getint('regexbot', 'port')
+IPV6 = config.getboolean('regexbot', 'ipv6')
 NICK = config.get('regexbot', 'nick')
 CHANNELS = config.get('regexbot', 'channels').split()
-try: VERSION = config.get('regexbot', 'version') + '; %s'
-except: VERSION = 'regexbot; https://github.com/micolous/ircbots/; %s'
+VERSION = config.get('regexbot', 'version') + '; %s'
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
 
-try: CHANNEL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'channel_flood_cooldown'))
-except: CHANNEL_FLOOD_COOLDOWN = timedelta(seconds=5)
-try: GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'global_flood_cooldown'))
-except: GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=1)
-try: MAX_MESSAGES = config.getint('regexbot', 'max_messages')
-except: MAX_MESSAGES = 25
-try: MAX_MESSAGE_SIZE = config.getint('regexbot', 'max_message_size')
-except: MAX_MESSAGE_SIZE = 200
+CHANNEL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'channel_flood_cooldown'))
+GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'global_flood_cooldown'))
+MAX_MESSAGES = config.getint('regexbot', 'max_messages')
+MAX_MESSAGE_SIZE = config.getint('regexbot', 'max_message_size')
 try: NICKSERV_PASS = config.get('regexbot', 'nickserv_pass')
 except: NICKSERV_PASS = None
 

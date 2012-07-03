@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import asyncore, random
 from hashlib import sha512
 from datetime import datetime, timedelta
-from ConfigParser import ConfigParser
+from configparser_plus import ConfigParserPlus
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
@@ -57,7 +57,19 @@ ETHICAL_STATES = [
 
 ETHICAL_STATES_COUNT = len(ETHICAL_STATES)
 
-config = ConfigParser()
+DEFAULT_CONFIG = {
+	'ethicsbot': {
+		'server': 'localhost',
+		'port': DEFAULT_PORT,
+		'ipv6': 'no',
+		'nick': 'ethicsbot',
+		'channel': '#test',
+		'flood_cooldown': 5,
+		'version': 'ethicsbot; https://github.com/micolous/ircbots/',
+	}
+}
+
+config = ConfigParserPlus(DEFAULT_CONFIG)
 try:
 	config.readfp(open(argv[1]))
 except:
@@ -73,19 +85,17 @@ except:
 
 # read config
 SERVER = config.get('ethicsbot', 'server')
-try: PORT = config.getint('ethicsbot', 'port')
-except: PORT = DEFAULT_PORT
-try: IPV6 = ( config.getint('ethicsbot', 'ipv6_support') == "yes" )
-except: IPV6 = False
+PORT = config.getint('ethicsbot', 'port')
+IPV6 = config.getboolean('ethicsbot', 'ipv6')
 NICK = config.get('ethicsbot', 'nick')
 CHANNEL = config.get('ethicsbot', 'channel')
-VERSION = 'ethicsbot; https://github.com/micolous/ircbots/; %s'
+VERSION = config.get('ethicsbot', 'version') + '; %s'
+
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
 
-try: FLOOD_COOLDOWN = timedelta(seconds=config.getint('ethicsbot', 'flood_cooldown'))
-except: FLOOD_COOLDOWN = timedelta(seconds=5)
+FLOOD_COOLDOWN = timedelta(seconds=config.getint('ethicsbot', 'flood_cooldown'))
 try: NICKSERV_PASS = config.get('ethicsbot', 'nickserv_pass')
 except: NICKSERV_PASS = None
 

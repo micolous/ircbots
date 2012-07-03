@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 feedbot: Prints out RSS feeds periodically on IRC.
-Copyright 2010 - 2011 Michael Farrell <http://micolous.id.au>
+Copyright 2010 - 2012 Michael Farrell <http://micolous.id.au>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -19,13 +19,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, asyncore, feedparser
 from time import sleep
-from ConfigParser import ConfigParser
+from configparser_plus import ConfigParserPlus
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
 from thread import start_new_thread
 
-config = ConfigParser()
+DEFAULT_CONFIG = {
+	'feedbot': {
+		'server': 'localhost',
+		'port': DEFAULT_PORT,
+		'ipv6': 'no',
+		'nick': 'feedbot',
+		'channel': '#test',
+		'update_frequency': 300,
+		'version': 'feedbot; https://github.com/micolous/ircbots/',
+	}
+}		
+
+config = ConfigParserPlus(DEFAULT_CONFIG)
 try:
 	config.readfp(open(argv[1]))
 except:
@@ -41,21 +53,17 @@ except:
 
 # read config
 SERVER = config.get('feedbot', 'server')
-try: PORT = config.getint('feedbot', 'port')
-except: PORT = DEFAULT_PORT
-try: IPV6 = ( config.getint('feedbot', 'ipv6_support') == "yes" )
-except: IPV6 = False
+PORT = config.getint('feedbot', 'port')
+IPV6 = config.getboolean('feedbot', 'ipv6')
 NICK = config.get('feedbot', 'nick')
 CHANNEL = config.get('feedbot', 'channel')
-VERSION = 'feedbot; https://github.com/micolous/ircbots/; %s'
+VERSION = config.get('feedbot', 'version') + '; %s'
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
 
-try: NICKSERV_PASS = config.get('feedbot', 'nickserv_pass')
-except: NICKSERV_PASS = None
-try: UPDATE_FREQUENCY = config.getint('feedbot', 'update_frequency')
-except: UPDATE_FREQUENCY = 300
+NICKSERV_PASS = config.get('feedbot', 'nickserv_pass')
+UPDATE_FREQUENCY = config.getint('feedbot', 'update_frequency')
 
 feed_urls = {}
 if config.has_section('feeds'):

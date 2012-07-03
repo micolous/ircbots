@@ -9,6 +9,9 @@ setup(
 	author="Michael Farrell",
 	author_email="micolous@gmail.com",
 	url="http://github.com/micolous/ircbots",
+	requires=[
+		'configparser_plus (>=1.0)',
+	]
 	
 	py_modules=['ircasync'],
 	scripts=['%s.py' % x for x in ['ethicsbot', 'feedbot', 'gamebot', 'ircserver', 'linkbot', 'pagerbot', 'regexbot', 'twitterbot']]
