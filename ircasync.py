@@ -170,10 +170,10 @@ class IRC(asynchat.async_chat):
 		self._doc = []
 		
 	def make_conn(self, host, port=DEFAULT_PORT, ipv6=False):
-		if not ipv6:
-			self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-		else:
+		if ipv6:
 			self.create_socket(socket.AF_INET6, socket.SOCK_STREAM)
+		else:
+			self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
 		debug("connecting to...", host, port)
 		self.connect((host, port))
 
