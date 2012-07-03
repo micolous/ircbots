@@ -97,7 +97,7 @@ class IRCEvent:
 		else:
 			self.nick = self.user = self.host = None
 			
-		if event_type == NOTICE or event_type == PRIVMSG or event_type == CTCP_REQUEST or event_type == CTCP_RESPONSE:
+		if event_type in (NOTICE, PRIVMSG, CTCP_REQUEST, CTCP_RESPONSE, PART):
 			if args[0] == self.connection.nick:
 				self.channel = self.nick				
 			else:
@@ -108,6 +108,8 @@ class IRCEvent:
 				self.args = args[1:]
 			else:
 				self.args = []
+		elif event_type in (JOIN,):
+			self.channel = text
 		else:
 			self.channel = None
 	
