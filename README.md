@@ -20,6 +20,8 @@ In `regexbot`, this cooldown timer will be set regardless of any errors (missing
 
 # bots #
 
+All of the bots use `configparser_plus`, [which is available from this git repository](https://github.com/micolous/configparser_plus).
+
 ## feedbot ##
 
 Requires feedparser.
