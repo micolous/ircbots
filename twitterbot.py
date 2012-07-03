@@ -64,7 +64,7 @@ PORT = config.getint('twitterbot', 'port')
 IPV6 = config.getboolean('twitterbot', 'ipv6')
 NICK = config.get('twitterbot', 'nick')
 CHANNEL = config.get('twitterbot', 'channel')
-VERSION = config.get('regexbot', 'version') + '; %s'
+VERSION = config.get('twitterbot', 'version') + '; %s'
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
