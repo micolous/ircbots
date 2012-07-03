@@ -45,7 +45,7 @@ DEFAULT_CONFIG = {
 	}
 }
 
-config = ConfigParser(DEFAULT_CONFIG)
+config = ConfigParserPlus(DEFAULT_CONFIG)
 try:
 	config.readfp(open(argv[1]))
 except:
