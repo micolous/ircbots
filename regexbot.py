@@ -186,9 +186,9 @@ def handle_msg(event, match):
 			event.reply('%s: message buffer is empty' % event.nick)
 			return
 		
-		if len(parts) == 3:
-			event.reply('%s: invalid expression, you forgot the trailing separator, dummy' % event.nick)
-			return
+		# if len(parts) == 3:
+		# 	event.reply('%s: invalid expression, you forgot the trailing separator, dummy' % event.nick)
+		# 	return
 		
 		if len(parts) != 4:
 			# not a valid regex
