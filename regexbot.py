@@ -81,6 +81,7 @@ last_message_times = {}
 flooders = {}
 ignore_list = []
 channel_list = []
+user_timeout = Queue.PriorityQueue()
 
 if config.has_section('ignore'):
 	for k,v in config.items('ignore'):
