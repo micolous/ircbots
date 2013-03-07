@@ -176,9 +176,6 @@ def handle_msg(event, match):
 				print "Ignoring message from %s because of: %s" % (event.origin, item.pattern)
 				return
 		
-		# handle regex
-		parts = msg.split(separator)
-		
 		if not flood_control(channel, event.when):
 			return
 		
@@ -186,28 +183,45 @@ def handle_msg(event, match):
 			event.reply('%s: message buffer is empty' % event.nick)
 			return
 		
-		if len(parts) == 3:
-			parts.append('')
-		# 	event.reply('%s: invalid expression, you forgot the trailing separator, dummy' % event.nick)
-		# 	return
-		
-		if len(parts) != 4:
-			# not a valid regex
+		# parse string to escape separators
+		indexes = []
+		escaping = False
+		for i in xrange(0,len(msg)):
+			c = msg[i]
+			if c == '\\':
+				# toggle between true and false
+				escaping = (escaping != True)
+			elif c == separator and not escaping:
+				# this is a nonescaped separator
+				indexes.append(i)
+			else:
+				# this is an escaped separator
+				escaping = False
+
+		# standardise string, so trailing separator doesn't matter
+		if len(indexes) == 2:
+			indexes.append(len(msg) - 1)
+
+		if len(indexes) != 3:
 			event.reply('%s: invalid expression, not the right amount of separators' % event.nick)
 			return
-		
+
+		regexp = msg[indexes[0] + 1 : indexes[1]]
+		replacement = msg[indexes[1] + 1 : indexes[2]]
+		options = msg[indexes[2] + 1 : ]
+
 		# find messages matching the string
-		if len(parts[1]) == 0:
+		if len(regexp) == 0:
 			event.reply('%s: original string is empty' % event.nick)
 			return
 		if str_replace:
-			ignore_case = 'i' in parts[3]
+			ignore_case = 'i' in options
 			e = None
 			try:
 				if ignore_case:
-					e = regex.compile(parts[1], regex.I)
+					e = regex.compile(regexp, regex.I)
 				else:
-					e = regex.compile(parts[1])
+					e = regex.compile(regexp)
 			except Exception, ex:
 				event.reply('%s: failure compiling regular expression: %s' % (event.nick, ex))
 				return
@@ -217,7 +231,7 @@ def handle_msg(event, match):
 			for x in range(len(message_buffer[channel])-1, -1, -1):
 				if time.time() > timeout: break
 				result = [None,None]
-				thread = RegexThread(e,parts[2],message_buffer[channel][x][1],result)
+				thread = RegexThread(e,replacement,message_buffer[channel][x][1],result)
 				thread.start()
 				try:
 					thread.join(0.1)
@@ -255,11 +269,11 @@ def handle_msg(event, match):
 			
 
 		if str_translate:
-			if len(parts[1]) != len(parts[2]) or len(parts[1]) < 1:
+			if len(regexp) != len(replacement) or len(regexp) < 1:
 				event.reply('%s: Translation is different length!'% event.nick)
 				return
 			# make translation table
-			table = maketrans(parts[1], parts[2])
+			table = maketrans(regexp, replacement)
 
 			for num in xrange(len(message_buffer[channel])-1, -1, -1):
 				# make new message, test if changes occur; if not, continue
