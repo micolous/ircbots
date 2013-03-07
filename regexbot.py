@@ -178,7 +178,35 @@ def handle_msg(event, match):
 		
 		if not flood_control(channel, event.when):
 			return
+
+		# remove all old entries
+		while not user_timeout.empty() and user_timeout.queue[0][0] < datetime.now():
+			user_timeout.get()
 		
+		for item in user_timeout.queue:
+			user = item['user']
+			timeout = item['timeout']
+			user_timeout.queue.remove(item)
+
+			if user != event.nick:
+				continue
+
+			timeout = timeout + 1
+			# make the maximum timeout ~30 minutes
+			if timeout > 11:
+				timeout = 11
+			time = datetime.now() + timedelta(seconds=2**timeout)
+
+			new_item = (time, {})
+			new_item[1]['uesr'] = user
+			new_item[1]['timeout'] = timeout
+			user_timeout.put(new_item)
+
+			print "Ignoring message from %s because of a timeout" % (event.nick)
+
+			return
+
+
 		if len(message_buffer[channel]) == 0:
 			event.reply('%s: message buffer is empty' % event.nick)
 			return
