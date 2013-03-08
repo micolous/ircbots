@@ -26,6 +26,7 @@ from ircasync import *
 from subprocess import Popen, PIPE
 from copy import copy
 from string import maketrans, translate
+from Queue import PriorityQueue
 
 DEFAULT_CONFIG = {
 	'regexbot': {
@@ -81,7 +82,8 @@ last_message_times = {}
 flooders = {}
 ignore_list = []
 channel_list = []
-user_timeout = Queue.PriorityQueue()
+user_timeouts = PriorityQueue()
+channel_timeouts = PriorityQueue()
 
 if config.has_section('ignore'):
 	for k,v in config.items('ignore'):
@@ -123,6 +125,84 @@ def flood_control(channel, when):
 		
 	# we're cool.
 	return True
+
+def channel_timeout(channel, when):
+	while not channel_timeouts.empty() and channel_timeouts.queue[0][0] < datetime.now():
+		channel_timeouts.get()
+	
+	timeout_arg = 4
+	found_item = False
+
+	for item in channel_timeouts.queue:
+		channel = item[1]['channel']
+
+		if channel != item[1]['channel']:
+			continue
+
+		found_item = True
+
+		timeout_arg = item[1]['timeout']
+
+		channel_timeouts.queue.remove(item)
+		timeout_arg = timeout_arg + 1
+
+		break
+
+	# make the maximum timeout ~30 minutes
+	if timeout_arg > 6:
+		timeout_arg = 6
+	timeout = when + timedelta(seconds=2**timeout_arg)
+
+	new_item = (timeout, {})
+	new_item[1]['channel'] = channel
+	new_item[1]['timeout'] = timeout_arg
+	channel_timeouts.put(new_item)
+
+
+	if found_item:
+		print "Ignoring message on %s because of a timeout, timeout now %d seconds" % (channel, 2**timeout_arg)
+		return True
+	else:
+		return False
+
+def user_timeout(user, when):
+	while not user_timeouts.empty() and user_timeouts.queue[0][0] < datetime.now():
+		user_timeouts.get()
+	
+	timeout_arg = 3
+	found_item = False
+
+	for item in user_timeouts.queue:
+		user = item[1]['user']
+
+		if user != item[1]['user']:
+			continue
+
+		found_item = True
+
+		timeout_arg = item[1]['timeout']
+
+		user_timeouts.queue.remove(item)
+		timeout_arg = timeout_arg + 1
+
+		break
+
+	# make the maximum timeout ~30 minutes
+	if timeout_arg > 12:
+		timeout_arg = 12
+	timeout = when + timedelta(seconds=2**timeout_arg)
+
+	new_item = (timeout, {})
+	new_item[1]['user'] = user
+	new_item[1]['timeout'] = timeout_arg
+	user_timeouts.put(new_item)
+
+	if found_item:
+		print "Ignoring message from %s because of a timeout, timeout now %d seconds" % (user, 2**timeout_arg)
+		return True
+	else:
+		return False
+
 
 def handle_ctcp(event, match):
 	channel = event.channel.lower()
@@ -177,36 +257,16 @@ def handle_msg(event, match):
 				print "Ignoring message from %s because of: %s" % (event.origin, item.pattern)
 				return
 		
+		# remove all old entries
+
+		test_channel_timeout = channel_timeout(channel, event.when)
+		test_user_timeout = user_timeout(event.nick, event.when)
+
 		if not flood_control(channel, event.when):
 			return
 
-		# remove all old entries
-		while not user_timeout.empty() and user_timeout.queue[0][0] < datetime.now():
-			user_timeout.get()
-		
-		for item in user_timeout.queue:
-			user = item['user']
-			timeout = item['timeout']
-			user_timeout.queue.remove(item)
-
-			if user != event.nick:
-				continue
-
-			timeout = timeout + 1
-			# make the maximum timeout ~30 minutes
-			if timeout > 11:
-				timeout = 11
-			time = datetime.now() + timedelta(seconds=2**timeout)
-
-			new_item = (time, {})
-			new_item[1]['uesr'] = user
-			new_item[1]['timeout'] = timeout
-			user_timeout.put(new_item)
-
-			print "Ignoring message from %s because of a timeout" % (event.nick)
-
+		if test_channel_timeout or test_user_timeout:
 			return
-
 
 		if len(message_buffer[channel]) == 0:
 			event.reply('%s: message buffer is empty' % event.nick)
