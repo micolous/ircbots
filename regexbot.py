@@ -134,7 +134,6 @@ def channel_timeout(channel, when):
 	found_item = False
 
 	for item in channel_timeouts.queue:
-		channel = item[1]['channel']
 
 		if channel != item[1]['channel']:
 			continue
@@ -173,7 +172,6 @@ def user_timeout(user, when):
 	found_item = False
 
 	for item in user_timeouts.queue:
-		user = item[1]['user']
 
 		if user != item[1]['user']:
 			continue
