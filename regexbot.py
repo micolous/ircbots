@@ -288,6 +288,7 @@ def handle_msg(event, match):
 		# standardise string, so trailing separator doesn't matter
 		if len(indexes) == 2:
 			indexes.append(len(msg) - 1)
+			msg = msg + "/"
 
 		if len(indexes) != 3:
 			event.reply('%s: invalid expression, not the right amount of separators' % event.nick)
