@@ -46,10 +46,10 @@ DEFAULT_CONFIG = {
 config = RawConfigParser()
 config.read_dict(DEFAULT_CONFIG)
 try:
-	config.readfp(open(argv[1]))
+	config.read_file(open(argv[1]))
 except:
 	try:
-		config.readfp(open('regexbot.ini'))
+		config.read_file(open('regexbot.ini'))
 	except:
 		print "Syntax:"
 		print "  %s [config]" % argv[0]
@@ -130,7 +130,7 @@ def channel_timeout(channel, when):
 	while not channel_timeouts.empty() and channel_timeouts.queue[0][0] < datetime.now():
 		channel_timeouts.get()
 	
-	timeout_arg = 4
+	timeout_arg = 3
 	found_item = False
 
 	for item in channel_timeouts.queue:
@@ -287,8 +287,8 @@ def handle_msg(event, match):
 
 		# standardise string, so trailing separator doesn't matter
 		if len(indexes) == 2:
-			indexes.append(len(msg) - 1)
 			msg = msg + "/"
+			indexes.append(len(msg) - 1)
 
 		if len(indexes) != 3:
 			event.reply('%s: invalid expression, not the right amount of separators' % event.nick)
