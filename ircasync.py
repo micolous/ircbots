@@ -263,6 +263,9 @@ class IRC(asynchat.async_chat):
 		if doc: self._doc = self._doc + doc
 
 	def rx_msg(self, args, text, origin):
+		for x in xrange(0,len(args)):
+			args[x] = args[x].decode("utf-8", "replace")
+		text = text.decode("utf-8", "replace")
 		event = IRCEvent(self, args[0], args[1:], text, origin)
 		
 		# do autojoin
