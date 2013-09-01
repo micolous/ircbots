@@ -192,8 +192,7 @@ class IRC(asynchat.async_chat):
 			debug("WARNING! you sent some newline characters in that message.  they have been removed.")
 		command = command.replace('\r','').replace('\n','')
 		
-		command = command.encode('ascii', 'ignore')
-		self.push(command + CRLF)
+		self.push(command.encode('utf8', 'ignore') + CRLF)
 		debug("sent/pushed command:", command)
 
 	# asyncore methods
