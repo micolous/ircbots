@@ -365,8 +365,9 @@ def handle_msg(event, match):
 
 			for num in xrange(len(message_buffer[channel])-1, -1, -1):
 				# make new message, test if changes occur; if not, continue
-				result = translate(message_buffer[channel][num][1], table)
-				if result == message_buffer[channel][num][1]:
+				message = message_buffer[channel][num][1]
+				result = translate(dec_mesg, table)
+				if result == dec_mesg:
 					continue
 				
 				# build new message, and insert into buffer
