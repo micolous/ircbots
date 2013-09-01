@@ -191,8 +191,9 @@ class IRC(asynchat.async_chat):
 		if '\r' in command or '\n' in command:
 			debug("WARNING! you sent some newline characters in that message.  they have been removed.")
 		command = command.replace('\r','').replace('\n','')
-		
-		self.push(command.encode('utf8', 'ignore') + CRLF)
+		comm  = command.decode('utf-8', 'replace')
+		command = comm.encode('utf-8')
+		self.push(command + CRLF)
 		debug("sent/pushed command:", command)
 
 	# asyncore methods
@@ -363,6 +364,8 @@ def chanAddr(host, port, chan):
 		
 def debug(*args):
 	import sys
+	reload(sys)
+	sys.setdefaultencoding('utf-8')
 	sys.stderr.write("DEBUG: ")
 	for a in args:
 		sys.stderr.write(str(a))
