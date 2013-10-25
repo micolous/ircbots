@@ -236,7 +236,7 @@ def handle_msg(event, match):
 				new_message = [message_buffer[channel][x][0], result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
 				for c in new_message[1]:
 					if ord(c) < 0x20:
-						event.reply('%s: hiiii rails')
+						event.reply('%s: hiiii rails' % (event.nick,))
 						return
 					
 				del message_buffer[channel][x]
@@ -270,7 +270,7 @@ def handle_msg(event, match):
 				new_message = [message_buffer[channel][num][0], result.replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][num][2]]
 				for c in new_message[1]:
 					if ord(c) < 0x20:
-						event.reply('%s: hiiii rails')
+						event.reply('%s: hiiii rails' % (event.nick,))
 						return
 
 				del message_buffer[channel][num]
