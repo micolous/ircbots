@@ -234,8 +234,8 @@ def handle_msg(event, match):
 				new_message = []
 				# replace the message in the buffer
 				new_message = [message_buffer[channel][x][0],result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
-				for x in new_message[0]:
-					if ord(x) < 0x20:
+				for c in new_message[0]:
+					if ord(c) < 0x20:
 						event.reply('%s: hiiii rails')
 						return
 					
@@ -268,8 +268,8 @@ def handle_msg(event, match):
 				
 				# build new message, and insert into buffer
 				new_message = [message_buffer[channel][num][0],result.replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][num][2]]
-				for x in new_message[0]:
-					if ord(x) < 0x20:
+				for c in new_message[0]:
+					if ord(c) < 0x20:
 						event.reply('%s: hiiii rails')
 						return
 
