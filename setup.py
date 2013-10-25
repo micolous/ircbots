@@ -11,6 +11,7 @@ setup(
 	url="http://github.com/micolous/ircbots",
 	requires=[
 		'configparser_plus (>=1.0)',
+		'configparser (>=3.2.0r1)',
 	]
 	
 	py_modules=['ircasync'],

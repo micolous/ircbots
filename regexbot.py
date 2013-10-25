@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import regex, asyncore, threading, inspect, ctypes, time
 from datetime import datetime, timedelta
-from configparser_plus import ConfigParserPlus
+from configparser import RawConfigParser
 from sys import argv, exit
 from ircasync import *
 from subprocess import Popen, PIPE
@@ -42,7 +42,8 @@ DEFAULT_CONFIG = {
 	}
 }
 
-config = ConfigParserPlus(DEFAULT_CONFIG)
+config = RawConfigParser()
+config.read_dict(DEFAULT_CONFIG)
 try:
 	config.readfp(open(argv[1]))
 except:
@@ -233,6 +234,11 @@ def handle_msg(event, match):
 				new_message = []
 				# replace the message in the buffer
 				new_message = [message_buffer[channel][x][0],result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
+				for x in new_message:
+					if ord(x) < 0x20:
+						event.reply('%s: hiiii rails')
+						return
+					
 				del message_buffer[channel][x]
 				message_buffer[channel].append(new_message)
 				
