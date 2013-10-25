@@ -61,9 +61,9 @@ except:
 SERVER = config.get('regexbot', 'server')
 PORT = config.getint('regexbot', 'port')
 IPV6 = config.getboolean('regexbot', 'ipv6')
-NICK = config.get('regexbot', 'nick')
-CHANNELS = config.get('regexbot', 'channels').split()
-VERSION = config.get('regexbot', 'version') + '; %s'
+NICK = str(config.get('regexbot', 'nick'))
+CHANNELS = str(config.get('regexbot', 'channels')).split()
+VERSION = str(config.get('regexbot', 'version')) + '; %s'
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
@@ -72,7 +72,7 @@ CHANNEL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'channel_fl
 GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'global_flood_cooldown'))
 MAX_MESSAGES = config.getint('regexbot', 'max_messages')
 MAX_MESSAGE_SIZE = config.getint('regexbot', 'max_message_size')
-try: NICKSERV_PASS = config.get('regexbot', 'nickserv_pass')
+try: NICKSERV_PASS = str(config.get('regexbot', 'nickserv_pass'))
 except: NICKSERV_PASS = None
 
 message_buffer = {}
@@ -85,7 +85,7 @@ channel_list = []
 if config.has_section('ignore'):
 	for k,v in config.items('ignore'):
 		try:
-			ignore_list.append(regex.compile(v, regex.I))
+			ignore_list.append(regex.compile(str(v), regex.I))
 		except Exception, ex:
 			print "Error compiling regular expression in ignore list (%s):" % k
 			print "  %s" % v
