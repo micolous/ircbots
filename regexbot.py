@@ -300,8 +300,8 @@ def handle_msg(event, match):
 		regexp = msg[indexes[0] + 1 : indexes[1]]
 		replacement = msg[indexes[1] + 1 : indexes[2]]
 		options = msg[indexes[2] + 1 : ]
-
-		raplacement = replacement.replace('\\'+separator, separator)
+		
+		replacement = replacement.replace('\\'+separator, separator)
 
 		# find messages matching the string
 		if len(regexp) == 0:
