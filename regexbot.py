@@ -301,6 +301,8 @@ def handle_msg(event, match):
 		replacement = msg[indexes[1] + 1 : indexes[2]]
 		options = msg[indexes[2] + 1 : ]
 
+		raplacement = replacement.replace('\\'+separator, separator)
+
 		# find messages matching the string
 		if len(regexp) == 0:
 			event.reply('%s: original string is empty' % event.nick)
