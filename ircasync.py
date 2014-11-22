@@ -147,7 +147,6 @@ class IRC(asynchat.async_chat):
 		make these two events NOT flow through to dispatchers.  By default this is
 		turned on.
 		"""
-		asynchat.async_chat.__init__(self)
 		self.bufIn = ''
 		self.set_terminator(CRLF)
 
@@ -172,6 +171,7 @@ class IRC(asynchat.async_chat):
 		self._doc = []
 		
 	def make_conn(self, host, port=DEFAULT_PORT, ipv6=False):
+		asynchat.async_chat.__init__(self)
 		if ipv6:
 			self.create_socket(socket.AF_INET6, socket.SOCK_STREAM)
 		else:
