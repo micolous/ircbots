@@ -29,29 +29,31 @@ from string import maketrans, translate
 from Queue import PriorityQueue
 
 DEFAULT_CONFIG = {
-	'regexbot': {
-		'server': 'localhost',
-		'port': DEFAULT_PORT,
-		'ipv6': 'no',
-		'nick': 'regexbot',
-		'channels': '#test',
-		'channel_flood_cooldown': 5,
-		'global_flood_cooldown': 1,
-		'max_messages': 25,
-		'max_message_size': 200,
-		'version': 'regexbot; https://github.com/micolous/ircbots/',
-		'translate_enabled': "True",
+'regexbot': {
+	'server': 'localhost',
+	'port': DEFAULT_PORT,
+	'ipv6': 'no',
+	'nick': 'regexbot',
+	'channels': '#test',
+	'channel_flood_cooldown': 5,
+	'global_flood_cooldown': 1,
+	'max_messages': 25,
+	'max_message_size': 200,
+	'version': 'regexbot; https://github.com/micolous/ircbots/',
+	'translate_enabled': "off",
+	'reconnect_to_server': "off",
+	"force_ending_slash": "on"
 	}
 }
 
 config = RawConfigParser()
 config.read_dict(DEFAULT_CONFIG)
 try:
-	config.read_file(open(argv[1]))
+	config.readfp(open(argv[1]))
 except:
 	try:
-		config.read_file(open('regexbot.ini'))
-	except:
+		config.readfp(open('regexbot.ini'))
+	except Exception:
 		print "Syntax:"
 		print "  %s [config]" % argv[0]
 		print ""
@@ -69,7 +71,9 @@ VERSION = str(config.get('regexbot', 'version')) + '; %s'
 try: VERSION = VERSION % Popen(["git","branch","-v","--contains"], stdout=PIPE).communicate()[0].strip()
 except: VERSION = VERSION % 'unknown'
 del Popen, PIPE
-TRANSLATE_ENABLED = config.get('regexbot','translate_enabled') == "True"
+TRANSLATE_ENABLED = config.getboolean('regexbot','translate_enabled')
+RECONNECT_TO_SERVER = config.getboolean('regexbot', 'reconnect_to_server')
+FORCE_ENDING_SLASH = config.getboolean('regexbot', 'force_ending_slash')
 
 CHANNEL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'channel_flood_cooldown'))
 GLOBAL_FLOOD_COOLDOWN = timedelta(seconds=config.getint('regexbot', 'global_flood_cooldown'))
@@ -77,7 +81,6 @@ MAX_MESSAGES = config.getint('regexbot', 'max_messages')
 MAX_MESSAGE_SIZE = config.getint('regexbot', 'max_message_size')
 try: NICKSERV_PASS = str(config.get('regexbot', 'nickserv_pass'))
 except: NICKSERV_PASS = None
-
 
 message_buffer = {}
 last_message = datetime.now()
@@ -112,27 +115,27 @@ def flood_control(channel, when):
 	# get delta
 	channel_delta = when - last_message_times[channel]
 	global_delta = when - last_message
-	
+
 	# update times
 	last_message = last_message_times[channel] = when
-	
+
 	# think global
 	if global_delta < GLOBAL_FLOOD_COOLDOWN:
 		print "Global flood protection hit, %s of %s seconds were waited" % (global_delta.seconds, GLOBAL_FLOOD_COOLDOWN.seconds)
 		return False
-		
+
 	# act local
 	if channel_delta < CHANNEL_FLOOD_COOLDOWN:
 		print "Local %s flood protection hit, %s of %s seconds were waited" % (channel, channel_delta.seconds, CHANNEL_FLOOD_COOLDOWN.seconds)
 		return False
-		
+
 	# we're cool.
 	return True
 
 def channel_timeout(channel, when):
 	while not channel_timeouts.empty() and channel_timeouts.queue[0][0] < datetime.now():
 		channel_timeouts.get()
-	
+
 	timeout_arg = 3
 	found_item = False
 
@@ -170,7 +173,7 @@ def channel_timeout(channel, when):
 def user_timeout(user, when):
 	while not user_timeouts.empty() and user_timeouts.queue[0][0] < datetime.now():
 		user_timeouts.get()
-	
+
 	timeout_arg = 3
 	found_item = False
 
@@ -218,23 +221,23 @@ def handle_msg(event, match):
 	global message_buffer, MAX_MESSAGES, last_message, last_message_times, flooders, channel_list
 	msg = event.text
 	channel = event.channel.lower()
-	
+
 	if channel not in channel_list:
 		# ignore messages not from our channels
 		return
-	
+
 	if msg.startswith(NICK):
 		lmsg = msg.lower()
-		
+
 		if 'help' in lmsg or 'info' in lmsg or '?' in lmsg:
 			# now flood protect!
 			if not flood_control(channel, event.when):
 				return
-		
+
 			# give information
 			event.reply('%s: I am regexbot, the interactive IRC regular expression tool, originally written by micolous.  Source/docs/version: %s' % (event.nick, VERSION))
 			return
-			
+
 	str_replace = False
 	str_translate = False
 
@@ -242,7 +245,7 @@ def handle_msg(event, match):
 		str_replace = True
 	if msg.startswith('y') and TRANSLATE_ENABLED:
 		str_translate = True
-	
+
 	valid_separators = ['@','#','%',':',';','/','\xe1']
 	separator = '/'
 	if (str_replace or str_translate) and len(msg) > 1 and msg[1] in valid_separators:
@@ -257,7 +260,7 @@ def handle_msg(event, match):
 				# ignore list item hit
 				print "Ignoring message from %s because of: %s" % (event.origin, item.pattern)
 				return
-		
+
 		# remove all old entries
 
 		test_channel_timeout = channel_timeout(channel, event.when)
@@ -272,7 +275,7 @@ def handle_msg(event, match):
 		if len(message_buffer[channel]) == 0:
 			event.reply('%s: message buffer is empty' % event.nick)
 			return
-		
+
 		# parse string to escape separators
 		indexes = []
 		escaping = False
@@ -288,8 +291,8 @@ def handle_msg(event, match):
 				# this is an escaped separator
 				escaping = False
 
-		# standardise string, so trailing separator doesn't matter
-		if len(indexes) == 2:
+		# standardise string, so trailing separator doesn't matter - unless we care
+		if len(indexes) == 2 and not FORCE_ENDING_SLASH:
 			msg = msg + "/"
 			indexes.append(len(msg) - 1)
 
@@ -300,7 +303,7 @@ def handle_msg(event, match):
 		regexp = msg[indexes[0] + 1 : indexes[1]]
 		replacement = msg[indexes[1] + 1 : indexes[2]]
 		options = msg[indexes[2] + 1 : ]
-		
+
 		replacement = replacement.replace('\\'+separator, separator)
 
 		# find messages matching the string
@@ -318,7 +321,7 @@ def handle_msg(event, match):
 			except Exception, ex:
 				event.reply('%s: failure compiling regular expression: %s' % (event.nick, ex))
 				return
-			
+
 			# now we have a valid regular expression matcher!
 			timeout = time.time() + 10
 			for x in range(len(message_buffer[channel])-1, -1, -1):
@@ -335,21 +338,19 @@ def handle_msg(event, match):
 					if result[0] == None or result[1] == None:
 						continue
 
-				except Exception, ex:
+				except TimeoutException as ex:
 					event.reply('%s: failure replacing: %s' % (event.nick, ex))
+					return
+				except Exception as ex:
+					print "Exception occured: %s" % (ex)
 					return
 
 				new_message = []
 				# replace the message in the buffer
-				new_message = [message_buffer[channel][x][0], result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
-				for c in new_message[1]:
-					if ord(c) < 0x20:
-						event.reply('%s: hiiii rails' % (event.nick,))
-						return
-					
+				new_message = [message_buffer[channel][x][0],result[1].replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][x][2]]
 				del message_buffer[channel][x]
 				message_buffer[channel].append(new_message)
-				
+
 				# now print the new text
 				print new_message
 				if new_message[2]:
@@ -359,7 +360,7 @@ def handle_msg(event, match):
 					# normal message
 					event.reply(('<%s> %s' % (new_message[0], new_message[1]))[:MAX_MESSAGE_SIZE])
 				return
-			
+
 
 		if str_translate:
 			if len(regexp) != len(replacement) or len(regexp) < 1:
@@ -374,14 +375,9 @@ def handle_msg(event, match):
 				result = translate(message, table)
 				if result == message:
 					continue
-				
-				# build new message, and insert into buffer
-				new_message = [message_buffer[channel][num][0], result.replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][num][2]]
-				for c in new_message[1]:
-					if ord(c) < 0x20:
-						event.reply('%s: hiiii rails' % (event.nick,))
-						return
 
+				# build new message, and insert into buffer
+				new_message = [message_buffer[channel][num][0],result.replace('\n','').replace('\r','')[:MAX_MESSAGE_SIZE], message_buffer[channel][num][2]]
 				del message_buffer[channel][num]
 				message_buffer[channel].append(new_message)
 
@@ -397,12 +393,12 @@ def handle_msg(event, match):
 
 		# no match found
 		event.reply('%s: no match found' % event.nick)
-			
+
 
 	else:
 		# add to buffer
 		message_buffer[channel].append([event.nick, msg[:MAX_MESSAGE_SIZE], False])
-		
+
 	# trim the buffer
 	message_buffer[channel] = message_buffer[channel][-MAX_MESSAGES:]
 
@@ -419,12 +415,14 @@ def _async_raise(tid, exctype):
 	if not inspect.isclass(exctype):
 		raise TypeError("Only types can be raised (not instances)")
 	res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid,
-												  ctypes.py_object(exctype))
+								ctypes.py_object(exctype))
 	if res == 0:
-		raise ValueError("invalid thread id")
-	elif res != 1:
-		# "if it returns a number greater than one, you're in trouble,
-		# and you should call it again with exc=NULL to revert the effect"
+		return;
+	# If this fails, the thread has probably already exited. A fix for
+	# a race condition.
+	elif res > 1:
+		# When returning greater than one somehow we affected more than one
+		# one thread (bad). Clear state.
 		ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
 		raise SystemError("PyThreadState_SetAsyncExc failed")
 
@@ -453,12 +451,17 @@ class RegexThread(threading.Thread):
 class TimeoutException(Exception):
 	pass
 
+def irc_conn(irc):
+	irc.make_conn(SERVER, PORT, ipv6=IPV6)
+
+if RECONNECT_TO_SERVER:
+	IRC.handle_close = irc_conn
+	IRC.handle_error = irc_conn
 
 irc = IRC(nick=NICK, start_channels=CHANNELS, version=VERSION)
 irc.bind(handle_msg, PRIVMSG)
 irc.bind(handle_welcome, RPL_WELCOME)
 irc.bind(handle_ctcp, CTCP_REQUEST)
+irc_conn(irc)
 
-irc.make_conn(SERVER, PORT, ipv6=IPV6)
 asyncore.loop()
-
