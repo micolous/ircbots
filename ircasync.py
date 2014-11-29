@@ -33,6 +33,11 @@ general-purpose IRC library for Python.
 import re, socket, asyncore, asynchat
 from datetime import datetime
 
+import sys
+# A horrible hack - reload sys so we have access to semi-private setdefaultencoding. Not required for python3.
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 #RFC 2811: Internet Relay Chat: Client Protocol
 #2.3 Messages
 # http://www.valinor.sorcery.net/docs/rfc2812/2.3-messages.html
@@ -302,7 +307,7 @@ class IRC(asynchat.async_chat):
 	def start_channels(self, chans):
 		self._startChannels = chans
 		#self.bind(self._welcome_join, RPL_WELCOME)
-				  
+
 	def _welcome_join(self, event, m):
 		for chan in self._startChannels:
 			self.todo([JOIN, chan])
@@ -366,9 +371,6 @@ def chanAddr(host, port, chan):
 	return "irc://%s%s/%s" % (host, portPart, chanPart)
 		
 def debug(*args):
-	import sys
-	reload(sys)
-	sys.setdefaultencoding('utf-8')
 	sys.stderr.write("DEBUG: ")
 	for a in args:
 		sys.stderr.write(str(a))
