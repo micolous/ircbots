@@ -33,6 +33,11 @@ general-purpose IRC library for Python.
 import re, socket, asyncore, asynchat
 from datetime import datetime
 
+import sys
+# A horrible hack - reload sys so we have access to semi-private setdefaultencoding. Not required for python3.
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 #RFC 2811: Internet Relay Chat: Client Protocol
 #2.3 Messages
 # http://www.valinor.sorcery.net/docs/rfc2812/2.3-messages.html
@@ -147,7 +152,6 @@ class IRC(asynchat.async_chat):
 		make these two events NOT flow through to dispatchers.  By default this is
 		turned on.
 		"""
-		asynchat.async_chat.__init__(self)
 		self.bufIn = ''
 		self.set_terminator(CRLF)
 
@@ -172,6 +176,7 @@ class IRC(asynchat.async_chat):
 		self._doc = []
 		
 	def make_conn(self, host, port=DEFAULT_PORT, ipv6=False):
+		asynchat.async_chat.__init__(self)
 		if ipv6:
 			self.create_socket(socket.AF_INET6, socket.SOCK_STREAM)
 		else:
@@ -191,7 +196,8 @@ class IRC(asynchat.async_chat):
 		if '\r' in command or '\n' in command:
 			debug("WARNING! you sent some newline characters in that message.  they have been removed.")
 		command = command.replace('\r','').replace('\n','')
-		
+		comm  = command.decode('utf-8', 'replace')
+		command = comm.encode('utf-8')
 		self.push(command + CRLF)
 		debug("sent/pushed command:", command)
 
@@ -262,6 +268,9 @@ class IRC(asynchat.async_chat):
 		if doc: self._doc = self._doc + doc
 
 	def rx_msg(self, args, text, origin):
+		for x in xrange(0,len(args)):
+			args[x] = args[x].decode("utf-8", "replace")
+		text = text.decode("utf-8", "replace")
 		event = IRCEvent(self, args[0], args[1:], text, origin)
 		
 		# do autojoin
@@ -298,7 +307,7 @@ class IRC(asynchat.async_chat):
 	def start_channels(self, chans):
 		self._startChannels = chans
 		#self.bind(self._welcome_join, RPL_WELCOME)
-				  
+
 	def _welcome_join(self, event, m):
 		for chan in self._startChannels:
 			self.todo([JOIN, chan])
@@ -362,7 +371,6 @@ def chanAddr(host, port, chan):
 	return "irc://%s%s/%s" % (host, portPart, chanPart)
 		
 def debug(*args):
-	import sys
 	sys.stderr.write("DEBUG: ")
 	for a in args:
 		sys.stderr.write(str(a))
